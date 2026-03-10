@@ -7,12 +7,12 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    document.title = '페이지를 찾을 수 없습니다 — 더브리핑';
+    document.title = '페이지를 찾을 수 없습니다 — 랩메린이';
     let metaRobots = document.querySelector('meta[name="robots"]');
     if (metaRobots) metaRobots.setAttribute('content', 'noindex, nofollow');
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
     return () => {
-      document.title = '더브리핑 — 해외선물 경제지표 대시보드';
+      document.title = '랩메린이 — 해외선물 경제지표 대시보드';
       if (metaRobots) metaRobots.setAttribute('content', 'index, follow');
     };
   }, [location.pathname]);

@@ -113,10 +113,10 @@ const Index = () => {
       <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg" role="banner">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="더브리핑" width={36} height={36} className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl shrink-0" />
+            <img src="/logo.png" alt="랩메린이" width={36} height={36} className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl shrink-0" />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-lg font-extrabold tracking-tight">더브리핑</h1>
+                <h1 className="text-sm sm:text-lg font-extrabold tracking-tight">랩메린이</h1>
                 {!isLoading && !isError && (
                   <span className="sm:hidden w-1.5 h-1.5 rounded-full bg-up animate-pulse shrink-0" aria-label="실시간 데이터 연결됨" role="status" />
                 )}

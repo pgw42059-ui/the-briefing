@@ -42,9 +42,9 @@ const AssetDetail = () => {
   useEffect(() => {
     if (!detail || !quote) return;
     const priceStr = quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 });
-    const title = `${detail.nameKr} (${detail.symbol}) ${priceStr} — 더브리핑`;
+    const title = `${detail.nameKr} (${detail.symbol}) ${priceStr} — 랩메린이`;
     const desc = `${detail.nameKr} 실시간 시세, 기술적 분석, 강세/약세 시그널을 확인하세요. 현재가 ${priceStr}`;
-    const url = `https://the-briefing.lovable.app/asset/${symbol}`;
+    const url = `https://lab.merini.com/asset/${symbol}`;
 
     document.title = title;
 
@@ -76,7 +76,7 @@ const AssetDetail = () => {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://the-briefing.lovable.app/" },
+          { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://lab.merini.com/" },
           { "@type": "ListItem", "position": 2, "name": detail.nameKr, "item": url },
         ]
       },
@@ -86,20 +86,20 @@ const AssetDetail = () => {
         "name": `${detail.nameKr} (${detail.symbol})`,
         "description": detail.description,
         "url": url,
-        "provider": { "@type": "Organization", "name": "더브리핑" },
+        "provider": { "@type": "Organization", "name": "랩메린이" },
       }
     ]);
     document.head.appendChild(jsonLd);
 
     return () => {
-      document.title = '더브리핑 — 해외선물 경제지표 대시보드';
+      document.title = '랩메린이 — 해외선물 경제지표 대시보드';
       if (metaDesc) metaDesc.setAttribute('content', '나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에. 강세/약세 시그널과 기술적 분석을 제공합니다.');
-      if (canonical) canonical.href = 'https://the-briefing.lovable.app';
+      if (canonical) canonical.href = 'https://lab.merini.com';
       // Restore OG tags
       Object.keys(ogUpdates).forEach(prop => {
         const tag = document.querySelector(`meta[property="${prop}"]`);
-        if (tag && prop === 'og:title') tag.setAttribute('content', '더브리핑 — 해외선물 경제지표 대시보드');
-        if (tag && prop === 'og:url') tag.setAttribute('content', 'https://the-briefing.lovable.app');
+        if (tag && prop === 'og:title') tag.setAttribute('content', '랩메린이 — 해외선물 경제지표 대시보드');
+        if (tag && prop === 'og:url') tag.setAttribute('content', 'https://lab.merini.com');
       });
       const ld = document.getElementById('asset-jsonld');
       if (ld) ld.remove();

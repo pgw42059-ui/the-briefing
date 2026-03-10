@@ -4,8 +4,8 @@ export const Footer = () => (
   <footer className="border-t border-border/60 bg-muted/30 mt-10" role="contentinfo">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
       <div className="flex items-center gap-2">
-        <img src="/logo.png" alt="더브리핑" width={24} height={24} className="w-6 h-6 rounded-lg" />
-        <span className="text-sm font-bold">더브리핑</span>
+        <img src="/logo.png" alt="랩메린이" width={24} height={24} className="w-6 h-6 rounded-lg" />
+        <span className="text-sm font-bold">랩메린이</span>
       </div>
       <div className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed space-y-2">
         <p>
@@ -18,7 +18,7 @@ export const Footer = () => (
         </p>
       </div>
       <p className="text-[10px] text-muted-foreground">
-        © {new Date().getFullYear()} 더브리핑 (THE BRIEFING). All rights reserved.
+        © {new Date().getFullYear()} 랩메린이 (LAB MERINI). All rights reserved.
       </p>
     </div>
   </footer>

@@ -36,8 +36,8 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       manifest: {
-        name: "더브리핑 — 해외선물 대시보드",
-        short_name: "더브리핑",
+        name: "랩메린이 — 해외선물 대시보드",
+        short_name: "랩메린이",
         description: "나스닥, S&P500, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에",
         theme_color: "#0f172a",
         background_color: "#0f172a",

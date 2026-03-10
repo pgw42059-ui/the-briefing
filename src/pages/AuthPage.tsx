@@ -69,8 +69,8 @@ export default function AuthPage() {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2.5 mb-2">
-            <img src="/logo.png" alt="더브리핑" width={40} height={40} className="w-10 h-10 rounded-xl" />
-            <h1 className="text-2xl font-extrabold tracking-tight">더브리핑</h1>
+            <img src="/logo.png" alt="랩메린이" width={40} height={40} className="w-10 h-10 rounded-xl" />
+            <h1 className="text-2xl font-extrabold tracking-tight">랩메린이</h1>
           </div>
           <p className="text-sm text-muted-foreground">로그인하여 관심종목을 관리하세요</p>
         </div>
