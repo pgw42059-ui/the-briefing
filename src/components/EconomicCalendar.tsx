@@ -1,0 +1,231 @@
+import { useMemo, useState, memo, useCallback } from 'react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { useEconomicEvents } from '@/hooks/use-economic-events';
+import { useEarningsEvents } from '@/hooks/use-earnings-events';
+import { ImportanceFilter, type ImportanceLevel } from './economic-calendar/ImportanceFilter';
+import { TimelineEvent } from './economic-calendar/TimelineEvent';
+import type { EconomicEvent } from '@/lib/mock-data';
+
+type CategoryTab = 'macro' | 'earnings';
+
+export const EconomicCalendar = memo(function EconomicCalendar() {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [importance, setImportance] = useState<ImportanceLevel>('all');
+  const [category, setCategory] = useState<CategoryTab>('macro');
+
+  const { data: macroEvents = [], isLoading: macroLoading } = useEconomicEvents();
+  const { data: earningsEvents = [], isLoading: earningsLoading } = useEarningsEvents();
+
+  const hasEarningsKey = !!import.meta.env.VITE_FINNHUB_KEY;
+  const isLoading = category === 'macro' ? macroLoading : earningsLoading;
+
+  // Tag macro events with category field if missing
+  const taggedMacro = useMemo<EconomicEvent[]>(
+    () => macroEvents.map((e) => ({ ...e, category: 'macro' as const })),
+    [macroEvents]
+  );
+
+  const taggedEarnings = useMemo<EconomicEvent[]>(
+    () => earningsEvents.map((e) => ({ ...e, category: 'earnings' as const })),
+    [earningsEvents]
+  );
+
+  const activeEvents = useMemo(() => {
+    return category === 'macro' ? taggedMacro : taggedEarnings;
+  }, [category, taggedMacro, taggedEarnings]);
+
+  const dayEvents = useMemo(() => {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    return activeEvents
+      .filter((e) => e.date === dateStr)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  }, [activeEvents, selectedDate]);
+
+  const filteredEvents = useMemo(
+    () => importance === 'all' ? dayEvents : dayEvents.filter((e) => e.importance === importance),
+    [dayEvents, importance]
+  );
+
+  const counts = useMemo(() => ({
+    all: dayEvents.length,
+    high: dayEvents.filter((e) => e.importance === 'high').length,
+    medium: dayEvents.filter((e) => e.importance === 'medium').length,
+    low: dayEvents.filter((e) => e.importance === 'low').length,
+  }), [dayEvents]);
+
+  // Combine all events for calendar dot indicators
+  const eventDates = useMemo(
+    () => new Set([...taggedMacro, ...taggedEarnings].map((e) => e.date)),
+    [taggedMacro, taggedEarnings]
+  );
+
+  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
+  const shiftDate = useCallback((days: number) => {
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + days);
+      return d;
+    });
+    setExpandedId(null);
+  }, []);
+
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }, []);
+
+  const hasEvents = useCallback(
+    (date: Date) => eventDates.has(format(date, 'yyyy-MM-dd')),
+    [eventDates]
+  );
+
+  const handleCategoryChange = useCallback((tab: CategoryTab) => {
+    setCategory(tab);
+    setExpandedId(null);
+    setImportance('all');
+  }, []);
+
+  const emptyMessage = category === 'macro'
+    ? '이 날짜에 예정된 경제지표가 없습니다'
+    : '이 날짜에 예정된 실적 발표가 없습니다';
+
+  return (
+    <Card className="rounded-xl overflow-hidden">
+      <CardHeader className="pb-3 px-4 sm:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+              📅 경제 캘린더
+            </CardTitle>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
+              {format(selectedDate, 'yyyy년 M월 d일 EEEE', { locale: ko })}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => shiftDate(-1)} aria-label="이전 날짜">
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs sm:text-sm gap-1.5 px-3 rounded-lg">
+                  <CalendarIcon className="w-3.5 h-3.5" />
+                  {isToday ? '오늘' : format(selectedDate, 'M/d (EEE)', { locale: ko })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 rounded-xl" align="end">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(d) => d && setSelectedDate(d)}
+                  className={cn('p-3 pointer-events-auto')}
+                  modifiers={{ hasEvent: (date) => hasEvents(date) }}
+                  modifiersClassNames={{ hasEvent: 'border border-primary/50' }}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => shiftDate(1)} aria-label="다음 날짜">
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            {!isToday && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs px-2 rounded-lg" onClick={() => setSelectedDate(new Date())}>
+                오늘
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Category tabs */}
+        <div className="mt-3 flex gap-1 p-1 bg-muted/40 rounded-lg w-fit">
+          <button
+            onClick={() => handleCategoryChange('macro')}
+            className={cn(
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              category === 'macro'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            거시경제
+          </button>
+          <button
+            onClick={() => handleCategoryChange('earnings')}
+            className={cn(
+              'px-3 py-1 text-xs font-medium rounded-md transition-colors',
+              category === 'earnings'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            📊 기업실적
+          </button>
+        </div>
+
+        {/* Importance filter */}
+        {dayEvents.length > 0 && (
+          <div className="mt-2">
+            <ImportanceFilter value={importance} onChange={setImportance} counts={counts} />
+          </div>
+        )}
+      </CardHeader>
+
+      <CardContent className="p-0 min-h-[350px]">
+        {isLoading ? (
+          <div className="px-4 py-4 space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex gap-3 items-center pl-10">
+                <Skeleton className="h-3 w-10 rounded" />
+                <Skeleton className="h-10 flex-1 rounded-lg" />
+              </div>
+            ))}
+          </div>
+        ) : category === 'earnings' && !hasEarningsKey ? (
+          <div className="px-6 py-10 text-center space-y-3">
+            <p className="text-3xl">🔑</p>
+            <p className="text-sm font-semibold">Finnhub API 키 필요</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              기업 실적 데이터는 Finnhub 무료 API를 사용합니다.<br />
+              아래 단계를 따라 <span className="font-mono">.env</span> 파일에 키를 추가하세요.
+            </p>
+            <ol className="text-xs text-left inline-block space-y-1.5 mt-2 bg-muted/40 rounded-xl p-4 border border-border/30">
+              <li><span className="font-semibold text-foreground">1.</span> <a href="https://finnhub.io/register" target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">finnhub.io/register</a> 에서 무료 가입</li>
+              <li><span className="font-semibold text-foreground">2.</span> 대시보드에서 API 키 복사</li>
+              <li><span className="font-semibold text-foreground">3.</span> <span className="font-mono bg-muted px-1 rounded">.env</span> 파일에 추가:</li>
+              <li className="font-mono text-[11px] bg-background border border-border/40 rounded px-2 py-1 select-all">
+                VITE_FINNHUB_KEY=your_api_key_here
+              </li>
+              <li><span className="font-semibold text-foreground">4.</span> 개발 서버 재시작</li>
+            </ol>
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="px-4 py-12 text-center">
+            <p className="text-3xl mb-3">{category === 'earnings' ? '📊' : '📭'}</p>
+            <p className="text-sm text-muted-foreground">
+              {dayEvents.length > 0 ? '해당 중요도의 이벤트가 없습니다' : emptyMessage}
+            </p>
+          </div>
+        ) : (
+          <div className="relative py-2" role="list" aria-label="경제 이벤트 타임라인">
+            {filteredEvents.map((event, i) => (
+              <TimelineEvent
+                key={event.id}
+                event={event}
+                isExpanded={expandedId === event.id}
+                onToggle={toggleExpand}
+                index={i}
+              />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});

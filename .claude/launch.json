@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "더브리핑 dev",
+      "runtimeExecutable": "C:/PROGRA~1/nodejs/node.exe",
+      "runtimeArgs": ["./node_modules/vite/bin/vite.js", "--port", "8080"],
+      "port": 8080,
+      "autoPort": false
+    }
+  ]
+}

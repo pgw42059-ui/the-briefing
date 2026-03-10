@@ -1,0 +1,242 @@
+import { memo, useMemo, useState } from 'react';
+import { Bell, CheckCheck, Trash2, Settings2, TrendingUp, CalendarDays, Star, FileText, X, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SwipeableNotificationItem } from '@/components/SwipeableNotificationItem';
+import type { AppNotification } from '@/hooks/use-notifications';
+
+interface NotificationBellProps {
+  notifications: AppNotification[];
+  unreadCount: number;
+  prefs: {
+    priceThreshold: number;
+    calendarEnabled: boolean;
+    watchlistEnabled: boolean;
+    summaryEnabled: boolean;
+  };
+  onUpdatePrefs: (update: Partial<NotificationBellProps['prefs']>) => void;
+  onMarkAllRead: () => void;
+  onMarkOneRead: (id: string) => void;
+  onDeleteOne: (id: string) => void;
+  onClearAll: () => void;
+}
+
+const typeConfig = {
+  price: { icon: TrendingUp, label: '시세', color: 'text-primary' },
+  calendar: { icon: CalendarDays, label: '경제지표', color: 'text-warning' },
+  watchlist: { icon: Star, label: '관심종목', color: 'text-warning' },
+  summary: { icon: FileText, label: '시황', color: 'text-primary' },
+};
+
+function formatTimeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return '방금';
+  if (min < 60) return `${min}분 전`;
+  const hrs = Math.floor(min / 60);
+  if (hrs < 24) return `${hrs}시간 전`;
+  return `${Math.floor(hrs / 24)}일 전`;
+}
+
+function getDateLabel(ts: number): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.floor((today.getTime() - target.getTime()) / 86400000);
+  if (diffDays === 0) return '오늘';
+  if (diffDays === 1) return '어제';
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
+function groupByDate(notifications: AppNotification[]): { label: string; items: AppNotification[] }[] {
+  const groups: { label: string; items: AppNotification[] }[] = [];
+  let currentLabel = '';
+  for (const n of notifications) {
+    const label = getDateLabel(n.timestamp);
+    if (label !== currentLabel) {
+      currentLabel = label;
+      groups.push({ label, items: [n] });
+    } else {
+      groups[groups.length - 1].items.push(n);
+    }
+  }
+  return groups;
+}
+
+export const NotificationBell = memo(function NotificationBell({
+  notifications,
+  unreadCount,
+  prefs,
+  onUpdatePrefs,
+  onMarkAllRead,
+  onMarkOneRead,
+  onDeleteOne,
+  onClearAll,
+}: NotificationBellProps) {
+  const [filter, setFilter] = useState<'all' | 'price' | 'calendar' | 'watchlist' | 'summary'>('all');
+  const filtered = useMemo(() => filter === 'all' ? notifications : notifications.filter(n => n.type === filter), [notifications, filter]);
+  const grouped = useMemo(() => groupByDate(filtered), [filtered]);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl relative" aria-label={unreadCount > 0 ? `알림 ${unreadCount > 9 ? '9+' : unreadCount}개 읽지 않음` : '알림'}>
+          <Bell className="w-4 h-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 sm:w-96 p-0 rounded-xl" align="end">
+        <Tabs defaultValue="notifications" className="w-full">
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <h3 className="text-sm font-bold">알림</h3>
+            <TabsList className="h-7 p-0.5 rounded-lg bg-muted">
+              <TabsTrigger value="notifications" className="text-[10px] px-2 h-6 rounded-md data-[state=active]:shadow-sm">
+                <Bell className="w-3 h-3 mr-1" />
+                목록
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="text-[10px] px-2 h-6 rounded-md data-[state=active]:shadow-sm">
+                <Settings2 className="w-3 h-3 mr-1" />
+                설정
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="notifications" className="mt-0">
+            {/* Filter chips */}
+            <div className="flex items-center gap-1 px-4 pb-2 overflow-x-auto scrollbar-none">
+              {([['all', '전체', Bell], ['price', '시세', TrendingUp], ['calendar', '경제지표', CalendarDays], ['watchlist', '관심종목', Star], ['summary', '시황', FileText]] as const).map(([key, label, Icon]) => (
+                <Button
+                  key={key}
+                  variant={filter === key ? 'default' : 'outline'}
+                  size="sm"
+                  className={`h-6 text-[10px] gap-1 px-2 rounded-full shrink-0 ${filter === key ? '' : 'border-border/60'}`}
+                  onClick={() => setFilter(key)}
+                >
+                  <Icon className="w-3 h-3" />
+                  {label}
+                </Button>
+              ))}
+            </div>
+
+            {notifications.length > 0 && (
+              <div className="flex items-center gap-1 px-4 pb-2">
+                <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 px-2 rounded-lg" onClick={onMarkAllRead}>
+                  <CheckCheck className="w-3 h-3" />
+                  모두 읽음
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 px-2 rounded-lg text-destructive" onClick={onClearAll}>
+                  <Trash2 className="w-3 h-3" />
+                  전체 삭제
+                </Button>
+              </div>
+            )}
+
+            <ScrollArea className="max-h-80">
+              {filtered.length === 0 ? (
+                <div className="py-10 text-center">
+                  <Bell className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
+                  <p className="text-sm text-muted-foreground">{filter === 'all' ? '알림이 없습니다' : '해당 유형의 알림이 없습니다'}</p>
+                </div>
+              ) : (
+                <div>
+                  {grouped.map(group => (
+                    <div key={group.label}>
+                      <div className="sticky top-0 z-10 px-4 py-1.5 bg-muted/80 backdrop-blur-sm">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</p>
+                      </div>
+                      <div className="divide-y divide-border/50">
+                        {group.items.map(n => {
+                          const cfg = typeConfig[n.type];
+                          const Icon = cfg.icon;
+                          return (
+                            <SwipeableNotificationItem key={n.id} id={n.id} isRead={n.read} onDelete={onDeleteOne} onMarkRead={onMarkOneRead}>
+                              <div className={`px-4 py-3 flex items-start gap-3 transition-colors group ${!n.read ? 'bg-primary/5' : ''}`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${!n.read ? 'bg-primary/10' : 'bg-muted/50'}`}>
+                                  <Icon className={`w-4 h-4 ${!n.read ? cfg.color : 'text-muted-foreground'}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className={`text-xs font-semibold truncate ${!n.read ? '' : 'text-muted-foreground'}`}>{n.title}</p>
+                                    {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                                  <p className="text-[10px] text-muted-foreground/60 mt-1">{formatTimeAgo(n.timestamp)}</p>
+                                </div>
+                                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                  {!n.read && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md" onClick={() => onMarkOneRead(n.id)} aria-label="읽음 처리">
+                                      <Eye className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md text-destructive" onClick={() => onDeleteOne(n.id)} aria-label="삭제">
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </SwipeableNotificationItem>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-0 px-4 pb-4 space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium">급등/급락 알림</label>
+                <span className="text-[10px] text-muted-foreground font-mono">{prefs.priceThreshold}% 이상</span>
+              </div>
+              <Slider
+                value={[prefs.priceThreshold]}
+                onValueChange={([v]) => onUpdatePrefs({ priceThreshold: v })}
+                min={0.5}
+                max={10}
+                step={0.5}
+                className="w-full"
+              />
+              <p className="text-[10px] text-muted-foreground">변동률이 설정값 이상일 때 알림</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium">경제지표 알림</p>
+                  <p className="text-[10px] text-muted-foreground">중요 지표 발표 30분 전</p>
+                </div>
+                <Switch checked={prefs.calendarEnabled} onCheckedChange={(v) => onUpdatePrefs({ calendarEnabled: v })} />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium">관심종목 알림</p>
+                  <p className="text-[10px] text-muted-foreground">관심종목 큰 변동 시</p>
+                </div>
+                <Switch checked={prefs.watchlistEnabled} onCheckedChange={(v) => onUpdatePrefs({ watchlistEnabled: v })} />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium">시황 요약 알림</p>
+                  <p className="text-[10px] text-muted-foreground">AI 시황 분석 업데이트 시</p>
+                </div>
+                <Switch checked={prefs.summaryEnabled} onCheckedChange={(v) => onUpdatePrefs({ summaryEnabled: v })} />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </PopoverContent>
+    </Popover>
+  );
+});

@@ -1,0 +1,87 @@
+/* Noto Sans KR loaded via index.html <link> to avoid render-blocking @import */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 16% 96%;
+    --foreground: 222 20% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 20% 14%;
+    --primary: 222 60% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 20% 14%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 222 50% 95%;
+    --accent-foreground: 222 60% 48%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 222 60% 48%;
+    --radius: 1rem;
+
+    --up: 0 78% 52%;
+    --up-foreground: 0 0% 100%;
+    --up-muted: 0 70% 95%;
+    --down: 220 78% 52%;
+    --down-foreground: 0 0% 100%;
+    --down-muted: 220 70% 95%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 224 28% 6%;
+    --foreground: 210 20% 94%;
+    --card: 224 24% 10%;
+    --card-foreground: 210 20% 94%;
+    --popover: 224 24% 10%;
+    --popover-foreground: 210 20% 94%;
+    --primary: 217 72% 62%;
+    --primary-foreground: 222 20% 10%;
+    --secondary: 224 18% 16%;
+    --secondary-foreground: 210 20% 88%;
+    --muted: 224 18% 14%;
+    --muted-foreground: 215 14% 60%;
+    --accent: 224 30% 16%;
+    --accent-foreground: 217 70% 58%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 20% 92%;
+    --border: 224 14% 18%;
+    --input: 224 14% 18%;
+    --ring: 217 70% 58%;
+
+    --up: 0 85% 64%;
+    --up-foreground: 0 0% 100%;
+    --up-muted: 0 50% 12%;
+    --down: 215 85% 66%;
+    --down-foreground: 0 0% 100%;
+    --down-muted: 215 50% 12%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm;
+  }
+}
