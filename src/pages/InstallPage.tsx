@@ -49,7 +49,7 @@ export default function InstallPage() {
     android: [
       { icon: <MoreVertical className="w-5 h-5" />, text: '브라우저 상단의 메뉴(⋮)를 탭하세요', detail: 'Chrome 기준 오른쪽 상단' },
       { icon: <Download className="w-5 h-5" />, text: '"앱 설치" 또는 "홈 화면에 추가"를 선택하세요', detail: '설치 배너가 자동으로 뜰 수도 있어요' },
-      { icon: <CheckCircle2 className="w-5 h-5" />, text: '"설치" 버튼을 눌러 완료!', detail: '앱 서랍에 랩메린이이 추가됩니다' },
+      { icon: <CheckCircle2 className="w-5 h-5" />, text: '"설치" 버튼을 눌러 완료!', detail: '앱 서랍에 랩메린이가 추가됩니다' },
     ],
     desktop: [
       { icon: <Download className="w-5 h-5" />, text: '주소창 오른쪽의 설치 아이콘을 클릭하세요', detail: 'Chrome/Edge 기준 ⊕ 또는 다운로드 아이콘' },
@@ -79,7 +79,7 @@ export default function InstallPage() {
           <div className="w-20 h-20 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
             <Download className="w-10 h-10 text-primary" />
           </div>
-          <h2 className="text-2xl font-extrabold">랩메린이을 설치하세요</h2>
+          <h2 className="text-2xl font-extrabold">랩메린이를 설치하세요</h2>
           <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
             홈 화면에 추가하면 앱처럼 빠르게 실행할 수 있어요.<br />
             오프라인에서도 최근 데이터를 확인할 수 있습니다.
@@ -93,7 +93,7 @@ export default function InstallPage() {
               <CheckCircle2 className="w-6 h-6 text-up shrink-0" />
               <div>
                 <p className="font-bold text-up">이미 설치되었습니다!</p>
-                <p className="text-sm text-muted-foreground mt-0.5">랩메린이이 앱으로 실행 중이에요.</p>
+                <p className="text-sm text-muted-foreground mt-0.5">랩메린이가 앱으로 실행 중이에요.</p>
               </div>
             </CardContent>
           </Card>

@@ -28,7 +28,7 @@ export function InstallBanner() {
           <Download className="w-5 h-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold leading-tight">더브리핑을 설치하세요</p>
+          <p className="text-sm font-bold leading-tight">랩메린이를 설치하세요</p>
           <p className="text-xs text-muted-foreground mt-0.5">홈 화면에서 앱처럼 빠르게 실행</p>
         </div>
         <Link to="/install">
