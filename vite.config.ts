@@ -6,6 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: mode === 'production' ? '/the-briefing/' : '/',
   server: {
     host: "::",
     port: 8080,
@@ -42,8 +43,8 @@ export default defineConfig(({ mode }) => ({
         background_color: "#0f172a",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
-        scope: "/",
+        start_url: "/the-briefing/",
+        scope: "/the-briefing/",
         lang: "ko",
         categories: ["finance", "business"],
         icons: [
