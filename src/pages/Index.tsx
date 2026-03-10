@@ -125,6 +125,18 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-3">
+            {/* merini.com 연동 버튼 */}
+            <a
+              href="https://merini.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 h-7 sm:h-9 px-2.5 sm:px-3.5 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+              aria-label="메린이 메인 사이트로 이동"
+            >
+              <span>🏠</span>
+              <span className="hidden sm:inline">merini.com</span>
+              <span className="sm:hidden">메린이</span>
+            </a>
             {!isLoading && !isError && (
               <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-up-muted" role="status" aria-label="실시간 데이터 연결됨">
                 <span className="w-2 h-2 rounded-full bg-up animate-pulse" aria-hidden="true" />
