@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "og-image.png"],
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
@@ -39,8 +41,8 @@ export default defineConfig(({ mode }) => ({
         name: "랩메린이 — 해외선물 대시보드",
         short_name: "랩메린이",
         description: "나스닥, S&P500, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에",
-        theme_color: "#0f172a",
-        background_color: "#0f172a",
+        theme_color: "#080a0c",
+        background_color: "#080a0c",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
