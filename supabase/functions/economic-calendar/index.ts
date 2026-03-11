@@ -422,20 +422,43 @@ function parseFFDate(dateStr: string): { date: string; time: string } {
   }
 }
 
+const FF_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+async function fetchFF(url: string): Promise<FFRawEvent[]> {
+  const res = await fetch(url, { headers: { 'User-Agent': FF_UA } });
+  if (!res.ok) throw new Error(`FF API error: ${res.status} ${url}`);
+  return res.json();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const res = await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-    });
-    if (!res.ok) throw new Error(`FF API error: ${res.status}`);
-    const raw: FFRawEvent[] = await res.json();
+    // Fetch this week + next week in parallel for broader coverage
+    const [thisWeek, nextWeek] = await Promise.allSettled([
+      fetchFF('https://nfs.faireconomy.media/ff_calendar_thisweek.json'),
+      fetchFF('https://nfs.faireconomy.media/ff_calendar_nextweek.json'),
+    ]);
 
+    const raw: FFRawEvent[] = [
+      ...(thisWeek.status === 'fulfilled' ? thisWeek.value : []),
+      ...(nextWeek.status === 'fulfilled' ? nextWeek.value : []),
+    ];
+
+    if (raw.length === 0) throw new Error('No data from FF API');
+
+    // Deduplicate by title+date
+    const seen = new Set<string>();
     const events = raw
       .filter((e) => e.date && e.title)
+      .filter((e) => {
+        const key = `${e.title}|${e.date}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .map((e, i) => {
         const { date, time } = parseFFDate(e.date);
         const actual = (e.actual && e.actual.trim()) || undefined;

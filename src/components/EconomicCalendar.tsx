@@ -1,5 +1,5 @@
 import { useMemo, useState, memo, useCallback } from 'react';
-import { format } from 'date-fns';
+import { format, startOfWeek, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +69,13 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
   );
 
   const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
+  // Data covers this week Mon–Sun + next week Mon–Sun
+  const dataRangeEnd = useMemo(() => {
+    const thisMonday = startOfWeek(new Date(), { weekStartsOn: 1 });
+    return addDays(thisMonday, 13); // end of next week Sunday
+  }, []);
+  const isOutOfRange = selectedDate > dataRangeEnd;
 
   const shiftDate = useCallback((days: number) => {
     setSelectedDate((prev) => {
@@ -207,9 +214,13 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <p className="text-3xl mb-3">{category === 'earnings' ? '📊' : '📭'}</p>
+            <p className="text-3xl mb-3">{category === 'earnings' ? '📊' : isOutOfRange ? '📆' : '📭'}</p>
             <p className="text-sm text-muted-foreground">
-              {dayEvents.length > 0 ? '해당 중요도의 이벤트가 없습니다' : emptyMessage}
+              {dayEvents.length > 0
+                ? '해당 중요도의 이벤트가 없습니다'
+                : isOutOfRange && category === 'macro'
+                  ? '이번 주·다음 주 이외의 데이터는 제공되지 않습니다'
+                  : emptyMessage}
             </p>
           </div>
         ) : (
