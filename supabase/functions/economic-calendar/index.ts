@@ -287,6 +287,77 @@ const EVENT_NAME_KR: Record<string, string> = {
   '3-y Note Auction': '3년물 국채입찰',
   '10-y TIPS Auction': '10년물 TIPS 입찰',
   '30-y TIPS Auction': '30년물 TIPS 입찰',
+
+  // === 회의록 / 보고서 ===
+  'RBA Meeting Minutes': 'RBA 통화정책 회의록',
+  'BOJ Meeting Minutes': 'BOJ 통화정책 회의록',
+  'BOE Meeting Minutes': 'BOE 통화정책 회의록',
+  'ECB Meeting Accounts': 'ECB 통화정책 회의록',
+  'FOMC Meeting Minutes': 'FOMC 의사록',
+  'RBA Financial Stability Review': 'RBA 금융안정보고서',
+  'RBA Quarterly Statement on Monetary Policy': 'RBA 분기 통화정책 보고서',
+  'RBNZ Financial Stability Report': 'RBNZ 금융안정보고서',
+  'SNB Quarterly Bulletin': 'SNB 분기 보고서',
+
+  // === 뉴질랜드 추가 ===
+  'RBNZ Gov Orr Speaks': 'RBNZ 오르 총재 연설',
+  'Visitor Arrivals m/m': '해외방문자수 (MoM)',
+  'NZ ANZ Business Confidence': 'NZ ANZ 기업신뢰지수',
+  'Credit Card Spending m/m': '신용카드 지출 (MoM)',
+
+  // === 미국 추가 2 ===
+  'Treasury Secretary Bessent Speaks': '베센트 재무장관 발언',
+  'Fed Governor Waller Speaks': '월러 연준 이사 연설',
+  'Consumer Confidence Index': '소비자 신뢰지수',
+  'S&P Global Manufacturing PMI': 'S&P 글로벌 제조업 PMI',
+  'S&P Global Services PMI': 'S&P 글로벌 서비스업 PMI',
+  'S&P Global Composite PMI': 'S&P 글로벌 복합 PMI',
+  'Richmond Manufacturing Index': '리치몬드 연준 제조업지수',
+  'Dallas Fed Manufacturing Index': '댈러스 연준 제조업지수',
+  'Kansas City Fed Manufacturing Index': '캔자스시티 연준 제조업지수',
+  'Atlanta Fed GDPNow': 'Atlanta Fed GDPNow',
+  'Import Prices m/m': '수입물가지수 (MoM)',
+  'Export Prices m/m': '수출물가지수 (MoM)',
+  'Capacity Utilization Rate': '설비가동률',
+  'Business Inventories m/m': '기업재고 (MoM)',
+  'Labor Costs q/q': '단위 노동비용 (QoQ)',
+  'Nonfarm Productivity q/q': '비농업 생산성 (QoQ)',
+  'Consumer Spending m/m': '소비지출 (MoM)',
+  'Personal Income m/m': '개인소득 (MoM)',
+
+  // === 캐나다 추가 ===
+  'Employment Change': '고용변화',
+  'Unemployment Rate': '실업률',
+  'Raw Materials Price Index m/m': '원자재물가지수 (MoM)',
+  'Building Permits m/m': '건축허가 (MoM)',
+  'Wholesale Sales m/m': '도매판매 (MoM)',
+  'Manufacturing Sales m/m': '제조업 판매 (MoM)',
+  'Housing Starts': '주택착공건수',
+  'Current Account': '경상수지',
+
+  // === 독일/유로존 추가 ===
+  'German Final Manufacturing PMI': '독일 제조업 PMI 확정치',
+  'German Final Services PMI': '독일 서비스업 PMI 확정치',
+  'German Import Prices m/m': '독일 수입물가지수 (MoM)',
+  'German GFK Consumer Climate': '독일 GfK 소비자 기후지수',
+  'Eurogroup Meetings': '유로그룹 회의',
+  'ECOFIN Meetings': 'EU 재무장관회의',
+  'Italian Budget Balance': '이탈리아 재정수지',
+  'Italian HICP m/m': '이탈리아 유럽조화 소비자물가지수 (MoM)',
+  'Eurozone Final Manufacturing PMI': '유로존 제조업 PMI 확정치',
+  'Eurozone Final Services PMI': '유로존 서비스업 PMI 확정치',
+  'Eurozone Current Account': '유로존 경상수지',
+  'Eurozone Trade Balance': '유로존 무역수지',
+
+  // === 일본 추가 2 ===
+  'SPPI y/y': '서비스업생산자물가지수 (YoY)',
+  'Monetary Policy Meeting Minutes': '통화정책회의 의사록',
+  'Adjusted Merchandise Trade Balance': '상품 무역수지 (계절조정)',
+  'Industrial Production m/m': '산업생산 (MoM)',
+  'Capacity Utilization m/m': '설비가동률 (MoM)',
+  'Core Machinery Orders m/m': '핵심 기계주문 (MoM)',
+  'Household Confidence': '가계 신뢰지수',
+  'Housing Starts y/y': '주택착공 (YoY)',
 };
 
 const SPEECH_PATTERNS: [RegExp, string][] = [
@@ -302,8 +373,16 @@ const SPEECH_PATTERNS: [RegExp, string][] = [
   [/^MPC Member (.+) Speaks$/, 'MPC 위원 $1 연설'],
   [/^SNB (.+) Speaks$/, 'SNB $1 연설'],
   [/^German Buba President (.+) Speaks$/, '독일 분데스방크 총재 $1 연설'],
-  [/^Gov Council Member (.+) Speaks$/, '정책위원 $1 연설'],
+  [/^German Buba (.+) Speaks$/, '독일 분데스방크 $1 연설'],
+  [/^Gov Council Member (.+) Speaks$/, 'ECB 정책위원 $1 연설'],
+  [/^RBNZ Gov (.+) Speaks$/, 'RBNZ 총재 $1 연설'],
+  [/^RBNZ (.+) Speaks$/, 'RBNZ $1 연설'],
+  [/^Treasury Secretary (.+) Speaks$/, '재무장관 $1 발언'],
+  [/^Fed (.+) Speaks$/, '연준 $1 연설'],
+  [/^ECB (.+) Speaks$/, 'ECB $1 연설'],
+  [/^(.+) Testifies$/, '$1 의회 증언'],
   [/^BOC Summary of Deliberations$/, 'BOC 정책결정 요약'],
+  [/^(.+) Speaks$/, '$1 연설'],
 ];
 
 function translateEventName(name: string): string {
