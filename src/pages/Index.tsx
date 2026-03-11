@@ -34,7 +34,7 @@ const ALL_SYMBOLS = [...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS, ...FX_SYMBOLS];
 
 const Index = () => {
   const navigate = useNavigate();
-  const { data: quotes, isLoading, isError } = useMarketQuotes();
+  const { data: quotes, isLoading, isError, isPlaceholderData } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
   const [signals, setSignals] = useState<ReturnType<typeof computeAllSignals>>([]);
   useEffect(() => {
@@ -45,7 +45,7 @@ const Index = () => {
   }, [quotes]);
   const { theme, toggle } = useTheme();
   const { data: sparklines } = useSparklines(ALL_SYMBOLS);
-  const [cacheTtlMinutes, setCacheTtlMinutes] = useState(5);
+  const [cacheTtlMinutes, setCacheTtlMinutes] = useState(60);
   const { user, displayName, signOut } = useAuth();
   const { symbols: watchlistSymbols, isWatched, toggle: toggleWatchlist } = useWatchlist();
 
@@ -63,7 +63,8 @@ const Index = () => {
     return allEvents.filter(e => e.date === today);
   }, [allEvents]);
 
-  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications } = useNotifications(quotes, todayEvents, watchlistSymbols);
+  // isPlaceholderData일 때는 mock 데이터 → 실제 데이터 전환 시 가짜 알림 방지
+  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
 
   const { data: analysisItems, isLoading: analysisLoading, isError: analysisError, forceRefetch, isFetching: analysisRefreshing, clearCache } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
 
