@@ -9,6 +9,7 @@ import type { MarketAnalysisItem } from '@/hooks/use-market-analysis';
 interface MarketSummaryProps {
   items?: MarketAnalysisItem[];
   isLoading?: boolean;
+  isError?: boolean;
   onRefresh?: () => void;
   isRefreshing?: boolean;
   cacheTtlMinutes: number;
@@ -28,7 +29,7 @@ const TTL_OPTIONS = [
   { value: 60, label: '1시간' },
 ];
 
-export function MarketSummary({ items, isLoading, onRefresh, isRefreshing, cacheTtlMinutes, onCacheTtlChange, onClearCache }: MarketSummaryProps) {
+export function MarketSummary({ items, isLoading, isError, onRefresh, isRefreshing, cacheTtlMinutes, onCacheTtlChange, onClearCache }: MarketSummaryProps) {
   const displayItems = items && items.length > 0 ? items : fallbackItems;
 
   return (
@@ -94,6 +95,11 @@ export function MarketSummary({ items, isLoading, onRefresh, isRefreshing, cache
               <Skeleton key={i} className="h-7 w-full rounded-lg" />
             ))}
           </>
+        ) : isError ? (
+          <div className="flex items-start gap-2.5 text-sm p-2.5 rounded-lg bg-warning/10">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-foreground/80 leading-relaxed">시황 분석을 불러오지 못했습니다. 새로고침을 눌러 다시 시도하세요.</p>
+          </div>
         ) : (
           displayItems.map((item, i) => (
             <div key={i} className={`flex items-start gap-2.5 text-sm p-2.5 rounded-lg ${

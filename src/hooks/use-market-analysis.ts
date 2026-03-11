@@ -69,7 +69,7 @@ export function useMarketAnalysis(
   const forceRefreshRef = useRef(false);
 
   const query = useQuery({
-    queryKey: ['market-analysis', quotes?.map(q => `${q.symbol}:${q.price}`).join(',')],
+    queryKey: ['market-analysis'],
     queryFn: () => {
       const force = forceRefreshRef.current;
       forceRefreshRef.current = false;

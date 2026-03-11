@@ -65,7 +65,7 @@ const Index = () => {
 
   const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications } = useNotifications(quotes, todayEvents, watchlistSymbols);
 
-  const { data: analysisItems, isLoading: analysisLoading, forceRefetch, isFetching: analysisRefreshing, clearCache } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
+  const { data: analysisItems, isLoading: analysisLoading, isError: analysisError, forceRefetch, isFetching: analysisRefreshing, clearCache } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
 
   const handleClearCache = useCallback(async () => {
     await clearCache();
@@ -313,7 +313,7 @@ const Index = () => {
             <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
               <div className="lg:col-span-3">
                 <Suspense fallback={<Skeleton className="h-[400px] rounded-xl" />}>
-                  <MarketSummary items={analysisItems} isLoading={analysisLoading} onRefresh={() => forceRefetch()} isRefreshing={analysisRefreshing} cacheTtlMinutes={cacheTtlMinutes} onCacheTtlChange={setCacheTtlMinutes} onClearCache={handleClearCache} />
+                  <MarketSummary items={analysisItems} isLoading={analysisLoading} isError={analysisError} onRefresh={() => forceRefetch()} isRefreshing={analysisRefreshing} cacheTtlMinutes={cacheTtlMinutes} onCacheTtlChange={setCacheTtlMinutes} onClearCache={handleClearCache} />
                 </Suspense>
               </div>
               <div className="lg:col-span-2">

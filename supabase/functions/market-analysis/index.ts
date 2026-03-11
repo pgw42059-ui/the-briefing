@@ -8,21 +8,6 @@ const corsHeaders = {
 
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Simple in-memory rate limiter
-const rateLimitMap = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 10; // max 10 requests per minute per IP
-
-function isRateLimited(clientId: string): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(clientId) || [];
-  const recent = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
-  if (recent.length >= RATE_LIMIT_MAX) return true;
-  recent.push(now);
-  rateLimitMap.set(clientId, recent);
-  return false;
-}
-
 // Input validation helpers
 const ALLOWED_SYMBOLS = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E', 'GC', 'SI', 'CL', 'NG', 'HG', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
 const MAX_QUOTES = 10;
@@ -52,14 +37,6 @@ serve(async (req) => {
   }
 
   try {
-    // Rate limiting
-    const clientId = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown';
-    if (isRateLimited(clientId)) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
-        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
