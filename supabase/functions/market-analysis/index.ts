@@ -116,8 +116,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
+    // Gemini API 키 (Google AI Studio에서 무료 발급: https://aistudio.google.com/apikey)
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not configured');
 
     // Build context for AI
     const quoteSummary = quotes.map((q: any) =>
@@ -154,14 +155,15 @@ ${todayEvents || '예정된 이벤트 없음'}
 위 데이터를 바탕으로 오늘의 시황 요약을 JSON으로 작성해주세요.
 형식: {"items": [{"type": "alert" | "info", "text": "..."}]}`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Google Gemini OpenAI-호환 엔드포인트 사용 (무료 티어: 15RPM, 1M 토큰/일)
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-001',
+        model: 'gemini-2.0-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
