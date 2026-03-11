@@ -269,7 +269,7 @@ const Index = () => {
             </section>
 
             {/* Signals */}
-            <Collapsible>
+            <Collapsible defaultOpen>
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card border border-border/60 hover:bg-accent/40 transition-colors group">
                   <div className="flex items-center gap-2">
