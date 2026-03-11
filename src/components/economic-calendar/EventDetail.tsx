@@ -29,15 +29,23 @@ function ImportanceBadge({ level }: { level: EconomicEvent['importance'] }) {
   );
 }
 
-function getEventStatus(event: EconomicEvent) {
+// 'upcoming' | 'recent-past' (< 2h) | 'long-past' (>= 2h)
+type EventStatus = 'upcoming' | 'recent-past' | 'long-past';
+
+function getEventStatus(event: EconomicEvent): EventStatus {
   try {
-    if (!event.date || !event.time || event.time === 'TBD') return false;
+    if (!event.date || !event.time || event.time === 'TBD') return 'upcoming';
     const now = new Date();
     // event.date/time은 KST 기준이므로 +09:00으로 명시해 UTC ms와 정확히 비교
     const eventTime = new Date(`${event.date}T${event.time}:00+09:00`);
-    return now > eventTime;
+    const diffMs = now.getTime() - eventTime.getTime();
+    if (diffMs <= 0) return 'upcoming';
+    // 2시간 이내: 아직 actual 안 올라왔을 수 있음
+    if (diffMs < 2 * 60 * 60 * 1000) return 'recent-past';
+    // 2시간 이상 경과: ForexFactory가 업데이트 안 했더라도 발표 완료로 처리
+    return 'long-past';
   } catch {
-    return false;
+    return 'upcoming';
   }
 }
 
@@ -106,7 +114,8 @@ function EarningsDetail({ event }: { event: EconomicEvent }) {
 }
 
 export const EventDetail = memo(function EventDetail({ event }: { event: EconomicEvent }) {
-  const isPast = getEventStatus(event);
+  const status = getEventStatus(event);
+  const isPast = status !== 'upcoming';
   const isEarnings = event.category === 'earnings';
 
   const hasActual = !!event.actual;
@@ -128,17 +137,19 @@ export const EventDetail = memo(function EventDetail({ event }: { event: Economi
           )}
           <span className="ml-auto text-[10px] font-medium">
             {isEarnings ? (
-              event.epsActual != null ? (
+              // 실적: epsActual 있거나 2시간+ 경과 시 완료
+              (event.epsActual != null || status === 'long-past') ? (
                 <span className="text-up">✅ 발표 완료</span>
-              ) : isPast ? (
+              ) : status === 'recent-past' ? (
                 <span className="text-warning">⏳ 발표 대기중</span>
               ) : (
                 <span className="text-muted-foreground">🕐 발표 예정</span>
               )
             ) : (
-              hasActual ? (
+              // 거시경제: actual 있거나 2시간+ 경과 시 완료
+              (hasActual || status === 'long-past') ? (
                 <span className="text-up">✅ 발표 완료</span>
-              ) : isPast ? (
+              ) : status === 'recent-past' ? (
                 <span className="text-warning">⏳ 발표 대기중</span>
               ) : (
                 <span className="text-muted-foreground">🕐 발표 예정</span>
