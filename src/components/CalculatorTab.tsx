@@ -104,6 +104,7 @@ function TickCalculator() {
   const [entry, setEntry] = useState('');
   const [target, setTarget] = useState('');
   const [stop, setStop] = useState('');
+  const [direction, setDirection] = useState<'long' | 'short'>('long');
 
   // 프리셋 선택 → 스펙 자동 입력
   const handleSelectFuture = (i: number) => {
@@ -139,8 +140,15 @@ function TickCalculator() {
 
   const tgt = calcResult(target);
   const stp = calcResult(stop);
-  const rr  = tgt && stp && stp.ticks !== 0
-    ? Math.abs(tgt.ticks / stp.ticks).toFixed(2)
+
+  // 방향 기반 손익 판단
+  const longDir = direction === 'long';
+  const tgtIsProfit = tgt != null && (longDir ? tgt.ticks > 0 : tgt.ticks < 0);
+  const stpIsLoss   = stp != null && (longDir ? stp.ticks < 0 : stp.ticks > 0);
+
+  // 유효한 셋업(목표=수익, 손절=손실)일 때만 R:R 표시
+  const rr = tgtIsProfit && stpIsLoss
+    ? Math.abs(tgt!.ticks / stp!.ticks).toFixed(2)
     : null;
 
   const futDef = futIdx !== null ? FUTURES[futIdx] : null;
@@ -181,6 +189,30 @@ function TickCalculator() {
           }`}
         >
           직접 입력
+        </button>
+      </div>
+
+      {/* 매수/매도 방향 */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setDirection('long')}
+          className={`py-2 rounded-xl text-sm font-bold transition-colors ${
+            longDir
+              ? 'bg-emerald-500 text-white shadow'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          📈 매수 (롱)
+        </button>
+        <button
+          onClick={() => setDirection('short')}
+          className={`py-2 rounded-xl text-sm font-bold transition-colors ${
+            !longDir
+              ? 'bg-red-500 text-white shadow'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          📉 매도 (숏)
         </button>
       </div>
 
@@ -277,10 +309,20 @@ function TickCalculator() {
             />
           </div>
           {tgt && (
-            <div className="mt-5 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-right min-w-[130px]">
-              <p className="text-xs font-bold text-emerald-500">{tgt.ticks > 0 ? '+' : ''}{tgt.ticks}틱</p>
-              <p className="text-xs font-semibold text-emerald-500">{fmtUSD(tgt.usd)}</p>
-              <p className="text-[10px] text-emerald-400">{fmtKRW(tgt.won)}</p>
+            <div className={`mt-5 px-3 py-2 rounded-xl text-right min-w-[130px] ${
+              tgtIsProfit
+                ? 'bg-emerald-500/10 border border-emerald-500/30'
+                : 'bg-red-500/10 border border-red-500/30'
+            }`}>
+              <p className={`text-xs font-bold ${tgtIsProfit ? 'text-emerald-500' : 'text-red-500'}`}>
+                {tgt.ticks > 0 ? '+' : ''}{tgt.ticks}틱
+              </p>
+              <p className={`text-xs font-semibold ${tgtIsProfit ? 'text-emerald-500' : 'text-red-500'}`}>
+                {fmtUSD(tgt.usd)}
+              </p>
+              <p className={`text-[10px] ${tgtIsProfit ? 'text-emerald-400' : 'text-red-400'}`}>
+                {fmtKRW(tgt.won)}
+              </p>
             </div>
           )}
         </div>
@@ -296,10 +338,20 @@ function TickCalculator() {
             />
           </div>
           {stp && (
-            <div className="mt-5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-right min-w-[130px]">
-              <p className="text-xs font-bold text-red-500">{stp.ticks > 0 ? '+' : ''}{stp.ticks}틱</p>
-              <p className="text-xs font-semibold text-red-500">{fmtUSD(stp.usd)}</p>
-              <p className="text-[10px] text-red-400">{fmtKRW(stp.won)}</p>
+            <div className={`mt-5 px-3 py-2 rounded-xl text-right min-w-[130px] ${
+              stpIsLoss
+                ? 'bg-red-500/10 border border-red-500/30'
+                : 'bg-emerald-500/10 border border-emerald-500/30'
+            }`}>
+              <p className={`text-xs font-bold ${stpIsLoss ? 'text-red-500' : 'text-emerald-500'}`}>
+                {stp.ticks > 0 ? '+' : ''}{stp.ticks}틱
+              </p>
+              <p className={`text-xs font-semibold ${stpIsLoss ? 'text-red-500' : 'text-emerald-500'}`}>
+                {fmtUSD(stp.usd)}
+              </p>
+              <p className={`text-[10px] ${stpIsLoss ? 'text-red-400' : 'text-emerald-400'}`}>
+                {fmtKRW(stp.won)}
+              </p>
             </div>
           )}
         </div>
