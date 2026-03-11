@@ -31,10 +31,11 @@ function ImportanceBadge({ level }: { level: EconomicEvent['importance'] }) {
 
 function getEventStatus(event: EconomicEvent) {
   try {
+    if (!event.date || !event.time || event.time === 'TBD') return false;
     const now = new Date();
-    const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    const eventTime = new Date(`${event.date}T${event.time}:00`);
-    return kstNow > eventTime;
+    // event.date/time은 KST 기준이므로 +09:00으로 명시해 UTC ms와 정확히 비교
+    const eventTime = new Date(`${event.date}T${event.time}:00+09:00`);
+    return now > eventTime;
   } catch {
     return false;
   }
