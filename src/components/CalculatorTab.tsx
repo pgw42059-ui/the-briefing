@@ -96,14 +96,30 @@ function RateBadge({
 // ──────────────────────────────────────────────
 function TickCalculator() {
   const { data: forex, isLoading, isError, refetch } = useForexRates();
-  const [futIdx, setFutIdx] = useState(0);
+  const [futIdx, setFutIdx] = useState<number | null>(0);
+  const [tickSizeStr,  setTickSizeStr]  = useState(String(FUTURES[0].tickSize));
+  const [tickValueStr, setTickValueStr] = useState(String(FUTURES[0].tickValue));
+  const [marginStr,    setMarginStr]    = useState(String(FUTURES[0].margin));
   const [contracts, setContracts] = useState('1');
   const [entry, setEntry] = useState('');
   const [target, setTarget] = useState('');
   const [stop, setStop] = useState('');
 
-  const fut = FUTURES[futIdx];
+  // 프리셋 선택 → 스펙 자동 입력
+  const handleSelectFuture = (i: number) => {
+    setFutIdx(i);
+    setEntry(''); setTarget(''); setStop('');
+    setTickSizeStr(String(FUTURES[i].tickSize));
+    setTickValueStr(String(FUTURES[i].tickValue));
+    setMarginStr(String(FUTURES[i].margin));
+  };
+
   const cnt = Math.max(1, parseInt(contracts) || 1);
+
+  // 스펙 파싱 (입력값 기준 — 프리셋 선택 여부와 무관하게 이 값으로 계산)
+  const tickSize  = Math.max(0.0001, parseFloat(tickSizeStr)  || 0.25);
+  const tickValue = Math.max(0.01,   parseFloat(tickValueStr) || 5);
+  const margin    = Math.max(0,      parseFloat(marginStr)    || 0);
 
   // 실시간 KRW 환율 (1 USD = X KRW)
   const krwRate = useMemo(() => {
@@ -115,8 +131,8 @@ function TickCalculator() {
     const price = parseFloat(priceStr);
     const entryVal = parseFloat(entry);
     if (isNaN(price) || isNaN(entryVal)) return null;
-    const ticks = Math.round((price - entryVal) / fut.tickSize);
-    const usd   = ticks * fut.tickValue * cnt;
+    const ticks = Math.round((price - entryVal) / tickSize);
+    const usd   = ticks * tickValue * cnt;
     const won   = usd * krwRate;
     return { ticks, usd, won };
   };
@@ -126,6 +142,8 @@ function TickCalculator() {
   const rr  = tgt && stp && stp.ticks !== 0
     ? Math.abs(tgt.ticks / stp.ticks).toFixed(2)
     : null;
+
+  const futDef = futIdx !== null ? FUTURES[futIdx] : null;
 
   return (
     <div className="space-y-4">
@@ -144,7 +162,7 @@ function TickCalculator() {
         {FUTURES.map((f, i) => (
           <button
             key={f.symbol}
-            onClick={() => { setFutIdx(i); setEntry(''); setTarget(''); setStop(''); }}
+            onClick={() => handleSelectFuture(i)}
             className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
               i === futIdx
                 ? 'bg-primary text-primary-foreground shadow'
@@ -154,26 +172,62 @@ function TickCalculator() {
             {f.symbol}
           </button>
         ))}
+        <button
+          onClick={() => setFutIdx(null)}
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+            futIdx === null
+              ? 'bg-primary text-primary-foreground shadow'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          직접 입력
+        </button>
       </div>
 
-      {/* 종목 정보 */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50 border border-border/40">
-        <span className="text-xl">{fut.emoji}</span>
-        <div className="flex-1">
-          <p className="text-sm font-bold">{fut.name}</p>
-          <p className="text-[11px] text-muted-foreground">
-            1틱 = {fut.tickSize}pt →&nbsp;
-            <span className="text-foreground font-semibold">${fut.tickValue}</span>
-            &nbsp;·&nbsp;초기증거금&nbsp;
-            <span className="text-foreground font-semibold">${fmt(fut.margin)}</span>
+      {/* 종목 스펙 입력 (프리셋 선택 시 자동 채워짐, 직접 수정 가능) */}
+      <div className="space-y-1.5">
+        {futDef && (
+          <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <span>{futDef.emoji}</span>
+            <span className="font-semibold text-foreground/80">{futDef.name}</span>
+            <span className="text-muted-foreground/50">· 아래 값 수정 가능</span>
           </p>
+        )}
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label className="text-[11px] text-muted-foreground font-medium block mb-1">틱 크기</label>
+            <input
+              type="number" value={tickSizeStr}
+              onChange={(e) => { setTickSizeStr(e.target.value); setFutIdx(null); }}
+              className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder="0.25"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground font-medium block mb-1">틱 가치 ($)</label>
+            <input
+              type="number" value={tickValueStr}
+              onChange={(e) => { setTickValueStr(e.target.value); setFutIdx(null); }}
+              className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder="5"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground font-medium block mb-1">증거금 ($)</label>
+            <input
+              type="number" value={marginStr}
+              onChange={(e) => { setMarginStr(e.target.value); setFutIdx(null); }}
+              className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder="0"
+            />
+          </div>
         </div>
       </div>
 
       {/* 계약수 + 실시간 환율 표시 */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[11px] text-muted-foreground font-medium block mb-1">계약수</label>
+          <label className="text-[11px] text-muted-foreground font-medium block mb-1">계약수 / 로트</label>
           <input
             type="number" min="1" value={contracts}
             onChange={(e) => setContracts(e.target.value)}
@@ -205,9 +259,9 @@ function TickCalculator() {
         <div>
           <label className="text-[11px] text-muted-foreground font-medium block mb-1">진입가</label>
           <input
-            type="number" step={fut.priceStep} value={entry}
+            type="number" step={tickSize} value={entry}
             onChange={(e) => setEntry(e.target.value)}
-            placeholder={`예: ${fut.symbol === 'NQ' ? '21000.00' : fut.symbol === 'ES' ? '5800.00' : fut.symbol === 'GC' ? '2900.00' : fut.symbol === 'CL' ? '70.00' : '0'}`}
+            placeholder="진입 가격 입력"
             className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
         </div>
@@ -217,7 +271,7 @@ function TickCalculator() {
           <div className="flex-1">
             <label className="text-[11px] text-muted-foreground font-medium block mb-1">🎯 목표가</label>
             <input
-              type="number" step={fut.priceStep} value={target}
+              type="number" step={tickSize} value={target}
               onChange={(e) => setTarget(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
             />
@@ -236,7 +290,7 @@ function TickCalculator() {
           <div className="flex-1">
             <label className="text-[11px] text-muted-foreground font-medium block mb-1">🛑 손절가</label>
             <input
-              type="number" step={fut.priceStep} value={stop}
+              type="number" step={tickSize} value={stop}
               onChange={(e) => setStop(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/40"
             />
@@ -260,6 +314,14 @@ function TickCalculator() {
             <p className="text-[10px] text-muted-foreground mt-0.5">
               손실 ${Math.abs(stp.usd / cnt).toFixed(0)} → 수익 ${Math.abs(tgt.usd / cnt).toFixed(0)} (계약당)
             </p>
+            {margin > 0 && (
+              <p className="text-[10px] text-muted-foreground">
+                손절시 증거금 대비&nbsp;
+                <span className="text-red-400 font-semibold">
+                  {(Math.abs(stp.usd) / (margin * cnt) * 100).toFixed(1)}% 손실
+                </span>
+              </p>
+            )}
           </div>
         </div>
       )}
