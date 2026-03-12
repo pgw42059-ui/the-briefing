@@ -111,43 +111,44 @@ const Index = () => {
         메인 콘텐츠로 건너뛰기
       </a>
       {/* Header */}
-      <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg" role="banner">
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="랩메린이" width={36} height={36} className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl shrink-0" />
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border/40" role="banner">
+        {/* teal accent bar */}
+        <div className="h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-70" />
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="relative shrink-0">
+              <img src="/logo.png" alt="랩메린이" width={36} height={36} className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shrink-0" />
+              {!isLoading && !isError && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse" aria-label="실시간 데이터 연결됨" role="status" />
+              )}
+            </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-lg font-extrabold tracking-tight">랩메린이</h1>
-                {!isLoading && !isError && (
-                  <span className="sm:hidden w-1.5 h-1.5 rounded-full bg-up animate-pulse shrink-0" aria-label="실시간 데이터 연결됨" role="status" />
-                )}
-              </div>
-              <p className="text-[9px] sm:text-xs text-muted-foreground leading-none truncate">실시간 글로벌 마켓 대시보드</p>
+              <h1 className="text-sm sm:text-base font-extrabold tracking-tight leading-none">랩메린이</h1>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-none truncate">실시간 글로벌 마켓 대시보드</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {!isLoading && !isError && (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20" role="status" aria-label="실시간 데이터 연결됨">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+                <span className="text-xs font-semibold text-primary">LIVE</span>
+              </div>
+            )}
+            <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline">
+              {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+            </span>
             {/* merini.com 연동 버튼 */}
             <a
               href="https://merini.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 h-7 sm:h-9 px-2.5 sm:px-3.5 rounded-lg sm:rounded-xl text-[11px] sm:text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+              className="flex items-center gap-1 h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
               aria-label="메린이 메인 사이트로 이동"
             >
-              <span>🏠</span>
+              <img src="/icons/icon-home.png" alt="" className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">merini.com</span>
-              <span className="sm:hidden">메린이</span>
             </a>
-            {!isLoading && !isError && (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-up-muted" role="status" aria-label="실시간 데이터 연결됨">
-                <span className="w-2 h-2 rounded-full bg-up animate-pulse" aria-hidden="true" />
-                <span className="text-xs font-semibold text-up">실시간</span>
-              </div>
-            )}
-            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
-              {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-            </span>
-            <Suspense fallback={<Button variant="ghost" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl" aria-label="알림"><Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></Button>}>
+            <Suspense fallback={<Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" aria-label="알림"><Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></Button>}>
               <NotificationBell
                 notifications={notifications}
                 unreadCount={unreadCount}
@@ -159,13 +160,13 @@ const Index = () => {
                 onClearAll={clearNotifications}
               />
             </Suspense>
-            <Button variant="ghost" size="icon" onClick={toggle} className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg sm:rounded-xl" aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}>
+            <Button variant="ghost" size="icon" onClick={toggle} className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}>
               {theme === 'dark' ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </Button>
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 sm:h-9 rounded-lg sm:rounded-xl text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3">
+                  <Button variant="outline" size="sm" className="h-7 sm:h-8 rounded-lg text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 border-border/60">
                     <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span className="max-w-[60px] sm:max-w-[80px] truncate hidden sm:inline">{displayName || user.email?.split('@')[0]}</span>
                   </Button>
@@ -181,7 +182,7 @@ const Index = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="outline" size="sm" className="h-7 sm:h-9 rounded-lg sm:rounded-xl text-xs sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3" onClick={() => navigate('/auth')} aria-label="로그인">
+              <Button variant="outline" size="sm" className="h-7 sm:h-8 rounded-lg text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 border-border/60" onClick={() => navigate('/auth')} aria-label="로그인">
                 <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="hidden sm:inline">로그인</span>
               </Button>
@@ -193,21 +194,20 @@ const Index = () => {
       <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
         <Tabs defaultValue="quotes" className="w-full">
           {/* Main Navigation Tabs */}
-          <TabsList className="w-full h-10 sm:h-12 rounded-xl bg-muted p-1 mb-5 sm:mb-7 grid grid-cols-4">
-            <TabsTrigger value="quotes" className="text-xs sm:text-sm gap-1 sm:gap-2 rounded-lg data-[state=active]:shadow-sm font-semibold">
+          <TabsList className="w-full h-11 sm:h-12 rounded-xl bg-muted/70 border border-border/50 p-1 mb-5 sm:mb-7 grid grid-cols-4 shadow-sm">
+            <TabsTrigger value="quotes" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline sm:inline">시세</span>
-              <span className="xs:hidden sm:hidden">시세</span>
+              시세
             </TabsTrigger>
-            <TabsTrigger value="analysis" className="text-xs sm:text-sm gap-1 sm:gap-2 rounded-lg data-[state=active]:shadow-sm font-semibold">
+            <TabsTrigger value="analysis" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
               <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               분석
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs sm:text-sm gap-1 sm:gap-2 rounded-lg data-[state=active]:shadow-sm font-semibold">
+            <TabsTrigger value="calendar" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               캘린더
             </TabsTrigger>
-            <TabsTrigger value="calculator" className="text-xs sm:text-sm gap-1 sm:gap-2 rounded-lg data-[state=active]:shadow-sm font-semibold">
+            <TabsTrigger value="calculator" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
               <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               계산기
             </TabsTrigger>
@@ -219,26 +219,29 @@ const Index = () => {
             <section aria-labelledby="quotes-heading">
               <Tabs defaultValue={hasWatchlist ? "watchlist" : "indices"} className="w-full">
                 <div className="flex items-center justify-between mb-4 sm:mb-5">
-                  <div>
-                    <h2 id="quotes-heading" className="text-lg sm:text-xl font-bold">📊 실시간 시세</h2>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">클릭하면 상세 차트를 볼 수 있어요</p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-1 h-6 rounded-full bg-primary shrink-0" aria-hidden="true" />
+                    <div>
+                      <h2 id="quotes-heading" className="text-base sm:text-lg font-bold leading-tight">실시간 시세</h2>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">클릭하면 상세 차트를 볼 수 있어요</p>
+                    </div>
                   </div>
-                  <TabsList className="h-8 sm:h-10 rounded-xl bg-muted p-0.5 sm:p-1">
+                  <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5">
                     {user && (
-                      <TabsTrigger value="watchlist" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                      <TabsTrigger value="watchlist" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                         <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         관심
                       </TabsTrigger>
                     )}
-                    <TabsTrigger value="indices" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                    <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                       <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       지수
                     </TabsTrigger>
-                    <TabsTrigger value="commodities" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                    <TabsTrigger value="commodities" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                       <Gem className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       원자재
                     </TabsTrigger>
-                    <TabsTrigger value="fx" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                    <TabsTrigger value="fx" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                       <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       FX
                     </TabsTrigger>
@@ -272,9 +275,11 @@ const Index = () => {
             {/* Signals */}
             <Collapsible defaultOpen>
               <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-card border border-border/60 hover:bg-accent/40 transition-colors group">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🎯</span>
+                <button className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all group shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                      <Activity className="w-4 h-4 text-primary" aria-hidden="true" />
+                    </div>
                     <div className="text-left">
                       <h2 className="text-sm sm:text-base font-bold">강세/약세 시그널</h2>
                       <p className="text-[10px] sm:text-xs text-muted-foreground">각 종목의 방향성을 한눈에 파악하세요</p>
@@ -285,16 +290,16 @@ const Index = () => {
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-4">
                 <Tabs defaultValue="indices" className="w-full">
-                  <TabsList className="h-8 sm:h-10 rounded-xl bg-muted p-0.5 sm:p-1 mb-4">
-                    <TabsTrigger value="indices" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                  <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5 mb-4">
+                    <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                       <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       지수
                     </TabsTrigger>
-                    <TabsTrigger value="commodities" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                    <TabsTrigger value="commodities" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                       <Gem className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       원자재
                     </TabsTrigger>
-                    <TabsTrigger value="fx" className="text-[10px] sm:text-sm gap-1 sm:gap-1.5 px-2 sm:px-3 h-7 sm:h-8 rounded-lg data-[state=active]:shadow-sm">
+                    <TabsTrigger value="fx" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                       <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       FX
                     </TabsTrigger>

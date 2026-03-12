@@ -14,7 +14,7 @@ const ACTION_THRESHOLD = 140;
 const MAX_OFFSET = ACTION_THRESHOLD + 20;
 
 function vibrate(ms: number = 10) {
-  try { navigator?.vibrate?.(ms); } catch {}
+  try { navigator?.vibrate?.(ms); } catch (_e) { /* vibration not supported */ }
 }
 
 export function SwipeableNotificationItem({ id, isRead, onDelete, onMarkRead, children }: SwipeableNotificationItemProps) {

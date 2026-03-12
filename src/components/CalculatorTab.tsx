@@ -202,7 +202,7 @@ function TickCalculator() {
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          📈 매수 (롱)
+          <img src="/icons/icon-chart-up.png" alt="" className="w-4 h-4 inline-block align-middle mr-1" /> 매수 (롱)
         </button>
         <button
           onClick={() => setDirection('short')}
@@ -212,7 +212,7 @@ function TickCalculator() {
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          📉 매도 (숏)
+          <img src="/icons/icon-chart-down.png" alt="" className="w-4 h-4 inline-block align-middle mr-1" /> 매도 (숏)
         </button>
       </div>
 
@@ -301,7 +301,7 @@ function TickCalculator() {
         {/* 목표가 */}
         <div className="flex items-center gap-2">
           <div className="flex-1">
-            <label className="text-[11px] text-muted-foreground font-medium block mb-1">🎯 목표가</label>
+            <label className="text-[11px] text-muted-foreground font-medium block mb-1"><img src="/icons/icon-target.png" alt="" className="w-3.5 h-3.5 inline-block align-middle mr-0.5" /> 목표가</label>
             <input
               type="number" step={tickSize} value={target}
               onChange={(e) => setTarget(e.target.value)}
@@ -619,7 +619,7 @@ export function CalculatorTab() {
 
       <Tabs defaultValue="tick">
         <TabsList className="w-full h-10 rounded-xl bg-muted p-1 mb-5 grid grid-cols-2">
-          <TabsTrigger value="tick" className="text-sm rounded-lg font-semibold">📈 틱 계산기</TabsTrigger>
+          <TabsTrigger value="tick" className="text-sm rounded-lg font-semibold flex items-center gap-1.5"><img src="/icons/icon-chart-up.png" alt="" className="w-4 h-4" /> 틱 계산기</TabsTrigger>
           <TabsTrigger value="fx"   className="text-sm rounded-lg font-semibold">💱 환율 계산기</TabsTrigger>
         </TabsList>
 

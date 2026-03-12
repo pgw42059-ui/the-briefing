@@ -23,11 +23,15 @@ const queryClient = new QueryClient();
 const DeferredToasts = () => {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const id = 'requestIdleCallback' in window
-      ? (window as any).requestIdleCallback(() => setReady(true), { timeout: 3000 })
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const id = w.requestIdleCallback
+      ? w.requestIdleCallback(() => setReady(true), { timeout: 3000 })
       : setTimeout(() => setReady(true), 2000);
     return () => {
-      if ('cancelIdleCallback' in window) (window as any).cancelIdleCallback(id);
+      if (w.cancelIdleCallback) w.cancelIdleCallback(id as number);
       else clearTimeout(id);
     };
   }, []);

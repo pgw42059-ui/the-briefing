@@ -15,7 +15,7 @@ async function fetchSparkline(symbol: string): Promise<SparklinePoint[]> {
   if (!res.ok) return [];
   const json = await res.json();
   if (!json.points?.length) return [];
-  return json.points.map((p: any) => ({ close: p.close }));
+  return json.points.map((p: { close: number }) => ({ close: p.close }));
 }
 
 async function fetchAllSparklines(symbols: string[]): Promise<Record<string, SparklinePoint[]>> {

@@ -172,7 +172,7 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            📊 기업실적
+            <img src="/icons/icon-chart-bar.png" alt="" className="w-4 h-4 inline-block align-middle mr-1" /> 기업실적
           </button>
         </div>
 
@@ -214,7 +214,7 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="px-4 py-12 text-center">
-            <p className="text-3xl mb-3">{category === 'earnings' ? '📊' : isOutOfRange ? '📆' : '📭'}</p>
+            <p className="mb-3"><img src={category === 'earnings' ? '/icons/icon-chart-bar.png' : isOutOfRange ? '/icons/icon-calendar.png' : '/icons/icon-inbox.png'} alt="" className="w-12 h-12 mx-auto" /></p>
             <p className="text-sm text-muted-foreground">
               {dayEvents.length > 0
                 ? '해당 중요도의 이벤트가 없습니다'

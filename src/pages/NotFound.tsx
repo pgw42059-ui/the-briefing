@@ -8,7 +8,7 @@ const NotFound = () => {
 
   useEffect(() => {
     document.title = '페이지를 찾을 수 없습니다 — 랩메린이';
-    let metaRobots = document.querySelector('meta[name="robots"]');
+    const metaRobots = document.querySelector('meta[name="robots"]');
     if (metaRobots) metaRobots.setAttribute('content', 'noindex, nofollow');
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
     return () => {

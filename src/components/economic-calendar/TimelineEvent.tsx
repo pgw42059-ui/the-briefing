@@ -81,7 +81,7 @@ export const TimelineEvent = memo(function TimelineEvent({ event, isExpanded, on
         {/* Country flag + name */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-base shrink-0">{isEarnings ? '📊' : event.country}</span>
+            {isEarnings ? <img src="/icons/icon-chart-bar.png" alt="" className="w-5 h-5 shrink-0" /> : <span className="text-base shrink-0">{event.country}</span>}
             {isEarnings && (
               <span className="text-base shrink-0">{event.country}</span>
             )}

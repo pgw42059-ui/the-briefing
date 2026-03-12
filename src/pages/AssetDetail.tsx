@@ -59,12 +59,12 @@ const AssetDetail = () => {
       'og:url': url,
     };
     Object.entries(ogUpdates).forEach(([prop, content]) => {
-      let tag = document.querySelector(`meta[property="${prop}"]`);
+      const tag = document.querySelector(`meta[property="${prop}"]`);
       if (tag) tag.setAttribute('content', content);
     });
 
     // Canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    const canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (canonical) canonical.href = url;
 
     // JSON-LD: BreadcrumbList + FinancialProduct
@@ -238,7 +238,7 @@ const AssetDetail = () => {
                 const todayOpen = chartData?.[0]?.open ?? null;
                 return [
                   { label: '현재가', value: quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '💵' },
-                  { label: '전일대비', value: `${isUp ? '+' : ''}${quote.change.toFixed(2)}`, color: isUp ? 'text-up' : 'text-down', emoji: isUp ? '📈' : '📉' },
+                  { label: '전일대비', value: `${isUp ? '+' : ''}${quote.change.toFixed(2)}`, color: isUp ? 'text-up' : 'text-down', emoji: <img src={isUp ? '/icons/icon-chart-up.png' : '/icons/icon-chart-down.png'} alt="" className="w-3.5 h-3.5 inline-block align-middle" /> },
                   { label: '전일 종가', value: prevClose.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '🕐' },
                   { label: '금일 시가', value: todayOpen != null ? todayOpen.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-', emoji: '🔔' },
                   { label: '고가', value: quote.high.toLocaleString(), emoji: '⬆️' },
@@ -258,7 +258,7 @@ const AssetDetail = () => {
         <Card className="rounded-xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base sm:text-lg font-bold">📈 가격 추이</CardTitle>
+              <CardTitle className="text-base sm:text-lg font-bold flex items-center gap-2"><img src="/icons/icon-chart-up.png" alt="" className="w-5 h-5" /> 가격 추이</CardTitle>
               <div className="flex gap-1 bg-muted p-1 rounded-xl">
                 {RANGE_OPTIONS.map((opt, i) => (
                   <Button
@@ -290,7 +290,7 @@ const AssetDetail = () => {
           <Card className="rounded-xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-base sm:text-lg font-bold flex items-center justify-between">
-                <span>🎯 강세/약세 시그널</span>
+                <span className="flex items-center gap-2"><img src="/icons/icon-target.png" alt="" className="w-5 h-5" /> 강세/약세 시그널</span>
                 <span className={`flex items-center gap-1.5 text-sm font-bold ${sentimentColor}`}>
                   <SentimentIcon className="w-4 h-4" />
                   {sentimentLabel} ({signal!.score > 0 ? '+' : ''}{signal!.score})
