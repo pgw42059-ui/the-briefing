@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 // Input validation helpers
 const ALLOWED_SYMBOLS = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E', 'GC', 'SI', 'CL', 'NG', 'HG', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
@@ -140,7 +140,7 @@ ${todayEvents || '예정된 이벤트 없음'}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -149,14 +149,17 @@ ${todayEvents || '예정된 이벤트 없음'}
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+      // On rate-limit or payment errors, serve stale cache if available rather than failing
+      if (response.status === 429 || response.status === 402) {
+        const errBody = await response.text().catch(() => '');
+        console.warn(`Gemini API returned ${response.status}: ${errBody}`);
+        if (cached) {
+          return new Response(JSON.stringify(cached.response), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Cache': 'stale' },
+          });
+        }
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded', items: [] }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Payment required' }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       console.error('AI gateway error:', response.status);
