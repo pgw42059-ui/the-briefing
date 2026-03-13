@@ -24,8 +24,10 @@ import { useSparklines } from '@/hooks/use-sparklines';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useWatchlist } from '@/hooks/use-watchlist';
-import { computeAllSignals } from '@/lib/compute-signals';
+import { computeAllSignals, computeCompositeScore } from '@/lib/compute-signals';
 import { useNotifications } from '@/hooks/use-notifications';
+import { useFearGreed } from '@/hooks/use-fear-greed';
+import { MarketCompositeBar } from '@/components/MarketCompositeBar';
 
 const INDEX_SYMBOLS = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E'];
 const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
@@ -37,12 +39,15 @@ const Index = () => {
   const { data: quotes, isLoading, isError, isPlaceholderData } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
   const [signals, setSignals] = useState<ReturnType<typeof computeAllSignals>>([]);
+  const [composite, setComposite] = useState<ReturnType<typeof computeCompositeScore> | null>(null);
   useEffect(() => {
-    if (!quotes) { setSignals([]); return; }
+    if (!quotes) { setSignals([]); setComposite(null); return; }
     startTransition(() => {
       setSignals(computeAllSignals(quotes));
+      setComposite(computeCompositeScore(quotes, fearGreed ?? null));
     });
-  }, [quotes]);
+  }, [quotes, fearGreed]);
+  const { data: fearGreed } = useFearGreed();
   const { theme, toggle } = useTheme();
   const { data: sparklines } = useSparklines(ALL_SYMBOLS);
   const [cacheTtlMinutes, setCacheTtlMinutes] = useState(60);
@@ -289,6 +294,7 @@ const Index = () => {
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-4">
+                {composite && <MarketCompositeBar composite={composite} />}
                 <Tabs defaultValue="indices" className="w-full">
                   <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5 mb-4">
                     <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">

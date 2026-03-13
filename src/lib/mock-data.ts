@@ -40,6 +40,25 @@ export interface MarketSignal {
   factors: { name: string; impact: 'positive' | 'negative' | 'neutral' }[];
 }
 
+export interface MarketPillar {
+  label: string;
+  score: number; // -100 to 100
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+}
+
+export type MarketRegime = 'risk-on' | 'risk-off' | 'stagflation' | 'mixed';
+
+export interface MarketCompositeScore {
+  score: number; // -100 to 100
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+  regime: MarketRegime;
+  regimeLabel: string;
+  pillars: MarketPillar[];
+  crossAssetFactors: { name: string; impact: 'positive' | 'negative' | 'neutral' }[];
+  fearGreedScore?: number;
+  fearGreedLabel?: string;
+}
+
 export interface ChartDataPoint {
   date: string;
   price: number;

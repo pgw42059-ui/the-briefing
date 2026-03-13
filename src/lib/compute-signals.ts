@@ -1,5 +1,6 @@
-import type { FuturesQuote, MarketSignal } from './mock-data';
+import type { FuturesQuote, MarketSignal, MarketCompositeScore, MarketPillar, MarketRegime } from './mock-data';
 import type { TechnicalResult } from './compute-technicals';
+import type { FearGreedData } from '@/hooks/use-fear-greed';
 
 /**
  * Compute market sentiment signals from live quote data,
@@ -138,4 +139,124 @@ export function computeSignal(
 
 export function computeAllSignals(quotes: FuturesQuote[]): MarketSignal[] {
   return quotes.map(q => computeSignal(q));
+}
+
+// ── Pillar helpers ─────────────────────────────────────────────
+
+const INDEX_SYMBOLS    = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E'];
+const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
+const FX_SYMBOLS       = ['EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
+
+function avgScore(signals: MarketSignal[], symbols: string[]): number {
+  const filtered = signals.filter(s => symbols.includes(s.symbol));
+  if (!filtered.length) return 0;
+  return Math.round(filtered.reduce((sum, s) => sum + s.score, 0) / filtered.length);
+}
+
+function scoreSentiment(score: number): MarketSignal['sentiment'] {
+  return score > 15 ? 'bullish' : score < -15 ? 'bearish' : 'neutral';
+}
+
+// ── Cross-asset regime detection ───────────────────────────────
+
+function detectRegime(quotes: FuturesQuote[]): {
+  regime: MarketRegime;
+  regimeLabel: string;
+  factors: MarketCompositeScore['crossAssetFactors'];
+} {
+  const get = (sym: string) => quotes.find(q => q.symbol === sym);
+
+  const nq  = get('NQ');
+  const es  = get('ES');
+  const gc  = get('GC');   // gold
+  const hg  = get('HG');   // copper
+  const cl  = get('CL');   // oil
+  const jpy = get('USDJPY'); // yen (↑ = risk-off)
+
+  const equityUp    = ((nq?.changePercent ?? 0) + (es?.changePercent ?? 0)) / 2 > 0.2;
+  const equityDown  = ((nq?.changePercent ?? 0) + (es?.changePercent ?? 0)) / 2 < -0.2;
+  const goldUp      = (gc?.changePercent ?? 0) > 0.3;
+  const copperUp    = (hg?.changePercent ?? 0) > 0.3;
+  const oilUp       = (cl?.changePercent ?? 0) > 0.5;
+  const yenUp       = (jpy?.changePercent ?? 0) < -0.2; // JPY appreciates when USDJPY falls
+
+  const factors: MarketCompositeScore['crossAssetFactors'] = [];
+
+  if (equityUp)   factors.push({ name: '주요 지수 동반 상승', impact: 'positive' });
+  if (equityDown) factors.push({ name: '주요 지수 동반 하락', impact: 'negative' });
+  if (goldUp)     factors.push({ name: '골드 강세 (안전자산 선호)', impact: equityDown ? 'negative' : 'neutral' });
+  if (copperUp)   factors.push({ name: '구리 강세 (경기 확장 신호)', impact: 'positive' });
+  if (oilUp && !equityUp) factors.push({ name: '유가 상승 + 주식 약세 (스태그플레이션 우려)', impact: 'negative' });
+  if (yenUp)      factors.push({ name: '엔화 강세 (리스크 회피)', impact: 'negative' });
+
+  // Regime classification
+  let regime: MarketRegime;
+  let regimeLabel: string;
+
+  if (equityUp && copperUp && !goldUp) {
+    regime = 'risk-on';
+    regimeLabel = '리스크온 (Risk-On) 🟢';
+  } else if (equityDown && goldUp && yenUp) {
+    regime = 'risk-off';
+    regimeLabel = '리스크오프 (Risk-Off) 🔴';
+  } else if (equityDown && oilUp) {
+    regime = 'stagflation';
+    regimeLabel = '스태그플레이션 우려 ⚠️';
+  } else {
+    regime = 'mixed';
+    regimeLabel = '혼조세 (Mixed) ⚪';
+  }
+
+  return { regime, regimeLabel, factors };
+}
+
+// ── Main composite score ───────────────────────────────────────
+
+export function computeCompositeScore(
+  quotes: FuturesQuote[],
+  fearGreed?: FearGreedData | null,
+): MarketCompositeScore {
+  const signals = computeAllSignals(quotes);
+
+  const equityScore    = avgScore(signals, INDEX_SYMBOLS);
+  const commodityScore = avgScore(signals, COMMODITY_SYMBOLS);
+  const fxScore        = avgScore(signals, FX_SYMBOLS);
+
+  // Fear/greed: normalize 0-100 → -100 to +100
+  const fgNorm = fearGreed != null ? (fearGreed.score - 50) * 2 : null;
+
+  // Weighted composite
+  const weightedBase =
+    equityScore    * 0.45 +
+    commodityScore * 0.30 +
+    fxScore        * 0.25;
+
+  const composite = fgNorm != null
+    ? Math.round(weightedBase * 0.85 + fgNorm * 0.15)
+    : Math.round(weightedBase);
+
+  const score = Math.max(-100, Math.min(100, composite));
+
+  const pillars: MarketPillar[] = [
+    { label: '지수', score: equityScore,    sentiment: scoreSentiment(equityScore) },
+    { label: '원자재', score: commodityScore, sentiment: scoreSentiment(commodityScore) },
+    { label: 'FX',  score: fxScore,         sentiment: scoreSentiment(fxScore) },
+  ];
+
+  if (fgNorm != null) {
+    pillars.push({ label: '공포/탐욕', score: Math.round(fgNorm), sentiment: scoreSentiment(Math.round(fgNorm)) });
+  }
+
+  const { regime, regimeLabel, factors } = detectRegime(quotes);
+
+  return {
+    score,
+    sentiment: scoreSentiment(score),
+    regime,
+    regimeLabel,
+    pillars,
+    crossAssetFactors: factors,
+    fearGreedScore: fearGreed?.score,
+    fearGreedLabel: fearGreed?.rating,
+  };
 }
