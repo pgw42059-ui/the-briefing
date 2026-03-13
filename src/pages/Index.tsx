@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { InstallBanner } from '@/components/InstallBanner';
 import { Footer } from '@/components/Footer';
 
+const CompactQuoteList = lazy(() => import('@/components/CompactQuoteList').then(m => ({ default: m.CompactQuoteList })));
 const PriceCard = lazy(() => import('@/components/PriceCard').then(m => ({ default: m.PriceCard })));
 const EconomicCalendar = lazy(() => import('@/components/EconomicCalendar').then(m => ({ default: m.EconomicCalendar })));
 const SentimentGauge = lazy(() => import('@/components/SentimentGauge').then(m => ({ default: m.SentimentGauge })));
@@ -77,25 +78,6 @@ const Index = () => {
     await clearCache();
     forceRefetch();
   }, [clearCache, forceRefetch]);
-
-  const renderQuoteGrid = (items: typeof quotes, skeletonCount: number, showWatchlistBtn = false) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 min-h-[180px]">
-      {isLoading
-        ? Array.from({ length: skeletonCount }).map((_, i) => <Skeleton key={i} className="h-[180px] rounded-xl" />)
-        : items?.map((q) => (
-          <Suspense key={q.symbol} fallback={<Skeleton className="h-[180px] rounded-xl" />}>
-            <PriceCard
-              quote={q}
-              sparklineData={sparklines?.[q.symbol]}
-              showWatchlist={!!user}
-              isWatched={isWatched(q.symbol)}
-              onToggleWatchlist={() => toggleWatchlist(q.symbol)}
-            />
-          </Suspense>
-        ))
-      }
-    </div>
-  );
 
   const renderSignalGrid = (items: typeof signals) => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -219,62 +201,98 @@ const Index = () => {
           </TabsList>
 
           {/* === 시세 탭 === */}
-          <TabsContent value="quotes" className="mt-0 space-y-6 sm:space-y-8">
-            {/* Price Cards */}
+          <TabsContent value="quotes" className="mt-0 space-y-4 sm:space-y-5">
+            {/* 실시간 시세 — 섹션별 컴팩트 리스트 */}
             <section aria-labelledby="quotes-heading">
-              <Tabs defaultValue={hasWatchlist ? "watchlist" : "indices"} className="w-full">
-                <div className="flex items-center justify-between mb-4 sm:mb-5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-1 h-6 rounded-full bg-primary shrink-0" aria-hidden="true" />
-                    <div>
-                      <h2 id="quotes-heading" className="text-base sm:text-lg font-bold leading-tight">실시간 시세</h2>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">클릭하면 상세 차트를 볼 수 있어요</p>
-                    </div>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-1 h-6 rounded-full bg-primary shrink-0" aria-hidden="true" />
+                  <div>
+                    <h2 id="quotes-heading" className="text-base sm:text-lg font-bold leading-tight">실시간 시세</h2>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">클릭하면 상세 차트를 볼 수 있어요</p>
                   </div>
-                  <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5">
-                    {user && (
-                      <TabsTrigger value="watchlist" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        관심
-                      </TabsTrigger>
-                    )}
-                    <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                      <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      지수
-                    </TabsTrigger>
-                    <TabsTrigger value="commodities" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                      <Gem className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      원자재
-                    </TabsTrigger>
-                    <TabsTrigger value="fx" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                      <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      FX
-                    </TabsTrigger>
-                  </TabsList>
                 </div>
-                {user && (
-                  <TabsContent value="watchlist" className="mt-0">
-                    {watchlistSymbols.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <Star className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm font-medium">관심종목이 없습니다</p>
-                        <p className="text-xs mt-1">각 종목 카드의 ⭐ 버튼을 눌러 추가하세요</p>
-                      </div>
-                    ) : (
-                      renderQuoteGrid(watchlistQuotes, watchlistSymbols.length, true)
-                    )}
-                  </TabsContent>
-                )}
-                <TabsContent value="indices" className="mt-0">
-                  {renderQuoteGrid(indexQuotes, 6)}
-                </TabsContent>
-                <TabsContent value="commodities" className="mt-0">
-                  {renderQuoteGrid(commodityQuotes, 5)}
-                </TabsContent>
-                <TabsContent value="fx" className="mt-0">
-                  {renderQuoteGrid(fxQuotes, 5)}
-                </TabsContent>
-              </Tabs>
+              </div>
+
+              {/* 관심종목 (로그인 시) */}
+              {hasWatchlist && (
+                <div className="rounded-xl border border-border/50 bg-card mb-3 overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                    <Star className="w-3.5 h-3.5 text-warning fill-warning" aria-hidden="true" />
+                    <span className="text-xs font-bold text-foreground/80">관심종목</span>
+                  </div>
+                  <Suspense fallback={<div className="p-3"><Skeleton className="h-10 rounded" /></div>}>
+                    <CompactQuoteList
+                      quotes={watchlistQuotes}
+                      sparklines={sparklines}
+                      isLoading={isLoading}
+                      skeletonCount={watchlistSymbols.length}
+                      showWatchlist
+                      isWatched={isWatched}
+                      onToggleWatchlist={toggleWatchlist}
+                    />
+                  </Suspense>
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* 주요 지수 */}
+                <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                    <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    <span className="text-xs font-bold text-foreground/80">주요 지수</span>
+                  </div>
+                  <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                    <CompactQuoteList
+                      quotes={indexQuotes}
+                      sparklines={sparklines}
+                      isLoading={isLoading}
+                      skeletonCount={6}
+                      showWatchlist={!!user}
+                      isWatched={isWatched}
+                      onToggleWatchlist={toggleWatchlist}
+                    />
+                  </Suspense>
+                </div>
+
+                {/* 원자재 + FX */}
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                      <Gem className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                      <span className="text-xs font-bold text-foreground/80">원자재</span>
+                    </div>
+                    <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:5}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                      <CompactQuoteList
+                        quotes={commodityQuotes}
+                        sparklines={sparklines}
+                        isLoading={isLoading}
+                        skeletonCount={5}
+                        showWatchlist={!!user}
+                        isWatched={isWatched}
+                        onToggleWatchlist={toggleWatchlist}
+                      />
+                    </Suspense>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                      <DollarSign className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                      <span className="text-xs font-bold text-foreground/80">FX</span>
+                    </div>
+                    <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:5}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                      <CompactQuoteList
+                        quotes={fxQuotes}
+                        sparklines={sparklines}
+                        isLoading={isLoading}
+                        skeletonCount={5}
+                        showWatchlist={!!user}
+                        isWatched={isWatched}
+                        onToggleWatchlist={toggleWatchlist}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* Signals */}
