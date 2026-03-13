@@ -17,4 +17,4 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-Sitemap: https://the-briefing.lovable.app/sitemap.xml
+Sitemap: https://lab.merini.com/sitemap.xml

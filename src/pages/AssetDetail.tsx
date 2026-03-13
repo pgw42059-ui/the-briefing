@@ -1,4 +1,5 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, Target, ShieldAlert, Sun, Moon, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,73 +39,6 @@ const AssetDetail = () => {
   const quote = quotes?.find((q) => q.symbol === upperSymbol);
   const { theme, toggle: toggleTheme } = useTheme();
 
-  // Dynamic SEO: title, meta, OG tags, JSON-LD
-  useEffect(() => {
-    if (!detail || !quote) return;
-    const priceStr = quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 });
-    const title = `${detail.nameKr} (${detail.symbol}) ${priceStr} — 랩메린이`;
-    const desc = `${detail.nameKr} 실시간 시세, 기술적 분석, 강세/약세 시그널을 확인하세요. 현재가 ${priceStr}`;
-    const url = `https://lab.merini.com/asset/${symbol}`;
-
-    document.title = title;
-
-    // Meta description
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute('content', desc);
-
-    // Open Graph tags
-    const ogUpdates: Record<string, string> = {
-      'og:title': title,
-      'og:description': desc,
-      'og:url': url,
-    };
-    Object.entries(ogUpdates).forEach(([prop, content]) => {
-      const tag = document.querySelector(`meta[property="${prop}"]`);
-      if (tag) tag.setAttribute('content', content);
-    });
-
-    // Canonical URL
-    const canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (canonical) canonical.href = url;
-
-    // JSON-LD: BreadcrumbList + FinancialProduct
-    const jsonLd = document.createElement('script');
-    jsonLd.type = 'application/ld+json';
-    jsonLd.id = 'asset-jsonld';
-    jsonLd.textContent = JSON.stringify([
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://lab.merini.com/" },
-          { "@type": "ListItem", "position": 2, "name": detail.nameKr, "item": url },
-        ]
-      },
-      {
-        "@context": "https://schema.org",
-        "@type": "FinancialProduct",
-        "name": `${detail.nameKr} (${detail.symbol})`,
-        "description": detail.description,
-        "url": url,
-        "provider": { "@type": "Organization", "name": "랩메린이" },
-      }
-    ]);
-    document.head.appendChild(jsonLd);
-
-    return () => {
-      document.title = '랩메린이 — 해외선물 경제지표 대시보드';
-      if (metaDesc) metaDesc.setAttribute('content', '나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에. 강세/약세 시그널과 기술적 분석을 제공합니다.');
-      if (canonical) canonical.href = 'https://lab.merini.com';
-      // Restore OG tags
-      Object.keys(ogUpdates).forEach(prop => {
-        const tag = document.querySelector(`meta[property="${prop}"]`);
-        if (tag && prop === 'og:title') tag.setAttribute('content', '랩메린이 — 해외선물 경제지표 대시보드');
-        if (tag && prop === 'og:url') tag.setAttribute('content', 'https://lab.merini.com');
-      });
-      const ld = document.getElementById('asset-jsonld');
-      if (ld) ld.remove();
-    };
-  }, [detail, quote, symbol]);
 
   const technicals = useMemo(() => {
     if (!dailyData?.length || !quote) return [];
@@ -169,8 +103,43 @@ const AssetDetail = () => {
 
   const chartColor = isUp ? 'hsl(var(--up))' : 'hsl(var(--down))';
 
+  const priceStr = quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  const pageTitle = `${detail.nameKr} (${detail.symbol}) ${priceStr} — 랩메린이`;
+  const pageDesc = `${detail.nameKr} 실시간 시세, 기술적 분석, 강세/약세 시그널을 확인하세요. 현재가 ${priceStr}`;
+  const pageUrl = `https://lab.merini.com/asset/${symbol}`;
+  const jsonLd = JSON.stringify([
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://lab.merini.com/" },
+        { "@type": "ListItem", "position": 2, "name": detail.nameKr, "item": pageUrl },
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FinancialProduct",
+      "name": `${detail.nameKr} (${detail.symbol})`,
+      "description": detail.description,
+      "url": pageUrl,
+      "provider": { "@type": "Organization", "name": "랩메린이" },
+    }
+  ]);
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <link rel="canonical" href={pageUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDesc} />
+        <script type="application/ld+json">{jsonLd}</script>
+      </Helmet>
       {/* Header */}
       <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
