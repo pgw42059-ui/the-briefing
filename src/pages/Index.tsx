@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, lazy, Suspense, startTransition, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, BarChart3, Gem, DollarSign, Activity, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, ChevronDown, Calculator } from 'lucide-react';
+import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator } from 'lucide-react';
 import { format } from 'date-fns';
 import { InstallBanner } from '@/components/InstallBanner';
 import { Footer } from '@/components/Footer';
@@ -16,7 +16,6 @@ const CalculatorTab = lazy(() => import('@/components/CalculatorTab').then(m => 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useMarketQuotes } from '@/hooks/use-market-quotes';
 import { useEconomicEvents } from '@/hooks/use-economic-events';
@@ -295,51 +294,14 @@ const Index = () => {
               </div>
             </section>
 
-            {/* Signals */}
-            <Collapsible defaultOpen>
-              <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl bg-card border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all group shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                      <Activity className="w-4 h-4 text-primary" aria-hidden="true" />
-                    </div>
-                    <div className="text-left">
-                      <h2 className="text-sm sm:text-base font-bold">강세/약세 시그널</h2>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">각 종목의 방향성을 한눈에 파악하세요</p>
-                    </div>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4">
-                {composite && <MarketCompositeBar composite={composite} />}
-                <Tabs defaultValue="indices" className="w-full">
-                  <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5 mb-4">
-                    <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                      <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      지수
-                    </TabsTrigger>
-                    <TabsTrigger value="commodities" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                      <Gem className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      원자재
-                    </TabsTrigger>
-                    <TabsTrigger value="fx" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
-                      <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      FX
-                    </TabsTrigger>
-                  </TabsList>
-                  <Suspense fallback={<div className="min-h-[200px]" />}>
-                    <TabsContent value="indices" className="mt-0">{renderSignalGrid(indexSignals)}</TabsContent>
-                    <TabsContent value="commodities" className="mt-0">{renderSignalGrid(commoditySignals)}</TabsContent>
-                    <TabsContent value="fx" className="mt-0">{renderSignalGrid(fxSignals)}</TabsContent>
-                  </Suspense>
-                </Tabs>
-              </CollapsibleContent>
-            </Collapsible>
           </TabsContent>
 
           {/* === 분석 탭 === */}
           <TabsContent value="analysis" className="mt-0 space-y-5 sm:space-y-6">
+            {/* 1. 시장 종합 심리 */}
+            {composite && <MarketCompositeBar composite={composite} />}
+
+            {/* 2. AI 분석 + 공포/탐욕 */}
             <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
               <div className="lg:col-span-3">
                 <Suspense fallback={<Skeleton className="h-[400px] rounded-xl" />}>
@@ -352,6 +314,38 @@ const Index = () => {
                 </Suspense>
               </div>
             </div>
+
+            {/* 3. 강세/약세 시그널 */}
+            <section aria-labelledby="signals-heading">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-1 h-6 rounded-full bg-primary shrink-0" aria-hidden="true" />
+                <div>
+                  <h2 id="signals-heading" className="text-base sm:text-lg font-bold leading-tight">강세/약세 시그널</h2>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">각 종목의 방향성을 한눈에 파악하세요</p>
+                </div>
+              </div>
+              <Tabs defaultValue="indices" className="w-full">
+                <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5 mb-4">
+                  <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
+                    <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    지수
+                  </TabsTrigger>
+                  <TabsTrigger value="commodities" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
+                    <Gem className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    원자재
+                  </TabsTrigger>
+                  <TabsTrigger value="fx" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
+                    <DollarSign className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    FX
+                  </TabsTrigger>
+                </TabsList>
+                <Suspense fallback={<div className="min-h-[200px]" />}>
+                  <TabsContent value="indices" className="mt-0">{renderSignalGrid(indexSignals)}</TabsContent>
+                  <TabsContent value="commodities" className="mt-0">{renderSignalGrid(commoditySignals)}</TabsContent>
+                  <TabsContent value="fx" className="mt-0">{renderSignalGrid(fxSignals)}</TabsContent>
+                </Suspense>
+              </Tabs>
+            </section>
           </TabsContent>
 
           {/* === 캘린더 탭 === */}
