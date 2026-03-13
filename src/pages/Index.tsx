@@ -38,6 +38,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { data: quotes, isLoading, isError, isPlaceholderData } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
+  const { data: fearGreed } = useFearGreed();
   const [signals, setSignals] = useState<ReturnType<typeof computeAllSignals>>([]);
   const [composite, setComposite] = useState<ReturnType<typeof computeCompositeScore> | null>(null);
   useEffect(() => {
@@ -47,7 +48,6 @@ const Index = () => {
       setComposite(computeCompositeScore(quotes, fearGreed ?? null));
     });
   }, [quotes, fearGreed]);
-  const { data: fearGreed } = useFearGreed();
   const { theme, toggle } = useTheme();
   const { data: sparklines } = useSparklines(ALL_SYMBOLS);
   const [cacheTtlMinutes, setCacheTtlMinutes] = useState(60);
