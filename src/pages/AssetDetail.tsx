@@ -63,35 +63,85 @@ const AssetDetail = () => {
     setTimeout(() => setIsRefreshing(false), 1000);
   }, [queryClient, upperSymbol]);
 
+  // ── 메타태그: detail만 있으면 즉시 계산 (로딩 중에도 SEO 적용) ──
+  const pageUrl = detail ? `https://lab.merini.com/asset/${symbol}` : null;
+  const pageTitle = detail
+    ? `${detail.nameKr} (${detail.symbol}) 실시간 시세 · 랩메린이`
+    : '랩메린이 — 해외선물 경제지표 대시보드';
+  const pageDesc = detail
+    ? `${detail.nameKr}(${detail.symbol}) 실시간 선물 시세와 기술적 분석을 제공합니다. 강세/약세 시그널, 지지·저항선, 경제 이벤트를 한눈에 확인하세요. ${detail.description.slice(0, 50)}`
+    : '해외선물 실시간 시세 대시보드';
+  const jsonLd = detail
+    ? JSON.stringify([
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://lab.merini.com/" },
+            { "@type": "ListItem", "position": 2, "name": detail.nameKr, "item": pageUrl },
+          ],
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FinancialProduct",
+          "name": `${detail.nameKr} (${detail.symbol}) 선물`,
+          "description": detail.description,
+          "url": pageUrl,
+          "provider": { "@type": "Organization", "name": "랩메린이", "url": "https://lab.merini.com" },
+          "category": "Futures",
+        },
+      ])
+    : null;
+
   if (!detail) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-4xl">🔍</p>
-          <p className="text-lg text-muted-foreground">종목을 찾을 수 없습니다</p>
-          <Link to="/"><Button variant="outline" className="rounded-xl">← 대시보드로 돌아가기</Button></Link>
+      <>
+        <Helmet>
+          <title>종목을 찾을 수 없습니다 · 랩메린이</title>
+          <meta name="robots" content="noindex" />
+        </Helmet>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <p className="text-4xl">🔍</p>
+            <p className="text-lg text-muted-foreground">종목을 찾을 수 없습니다</p>
+            <Link to="/"><Button variant="outline" className="rounded-xl">← 대시보드로 돌아가기</Button></Link>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (isLoading || !quote) {
     return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Link to="/"><Button variant="ghost" size="icon" className="rounded-xl"><ArrowLeft className="w-4 h-4" /></Button></Link>
-            <Skeleton className="h-6 w-32" />
-          </div>
-        </header>
-        <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          <Skeleton className="h-[300px] rounded-xl" />
-          <div className="grid md:grid-cols-2 gap-4">
-            <Skeleton className="h-[200px] rounded-xl" />
-            <Skeleton className="h-[200px] rounded-xl" />
-          </div>
-        </main>
-      </div>
+      <>
+        <Helmet>
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDesc} />
+          <link rel="canonical" href={pageUrl!} />
+          <meta property="og:title" content={pageTitle} />
+          <meta property="og:description" content={pageDesc} />
+          <meta property="og:url" content={pageUrl!} />
+          <meta property="og:type" content="website" />
+          <meta name="twitter:title" content={pageTitle} />
+          <meta name="twitter:description" content={pageDesc} />
+          {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
+        </Helmet>
+        <div className="min-h-screen bg-background">
+          <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
+            <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+              <Link to="/"><Button variant="ghost" size="icon" className="rounded-xl"><ArrowLeft className="w-4 h-4" /></Button></Link>
+              <Skeleton className="h-6 w-32" />
+            </div>
+          </header>
+          <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+            <Skeleton className="h-[300px] rounded-xl" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <Skeleton className="h-[200px] rounded-xl" />
+              <Skeleton className="h-[200px] rounded-xl" />
+            </div>
+          </main>
+        </div>
+      </>
     );
   }
 
@@ -103,42 +153,20 @@ const AssetDetail = () => {
 
   const chartColor = isUp ? 'hsl(var(--up))' : 'hsl(var(--down))';
 
-  const priceStr = quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 });
-  const pageTitle = `${detail.nameKr} (${detail.symbol}) ${priceStr} — 랩메린이`;
-  const pageDesc = `${detail.nameKr} 실시간 시세, 기술적 분석, 강세/약세 시그널을 확인하세요. 현재가 ${priceStr}`;
-  const pageUrl = `https://lab.merini.com/asset/${symbol}`;
-  const jsonLd = JSON.stringify([
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "홈", "item": "https://lab.merini.com/" },
-        { "@type": "ListItem", "position": 2, "name": detail.nameKr, "item": pageUrl },
-      ]
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "FinancialProduct",
-      "name": `${detail.nameKr} (${detail.symbol})`,
-      "description": detail.description,
-      "url": pageUrl,
-      "provider": { "@type": "Organization", "name": "랩메린이" },
-    }
-  ]);
-
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDesc} />
-        <link rel="canonical" href={pageUrl} />
+        <link rel="canonical" href={pageUrl!} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDesc} />
-        <meta property="og:url" content={pageUrl} />
+        <meta property="og:url" content={pageUrl!} />
         <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDesc} />
-        <script type="application/ld+json">{jsonLd}</script>
+        {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
       </Helmet>
       {/* Header */}
       <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
