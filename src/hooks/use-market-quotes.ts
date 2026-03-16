@@ -6,10 +6,7 @@ import { mockQuotes } from '@/lib/mock-data';
 async function fetchQuotes(): Promise<FuturesQuote[]> {
   const { data, error } = await supabase.functions.invoke('market-quotes');
   
-  if (error) {
-    console.error('Edge function error:', error);
-    throw error;
-  }
+  if (error) throw error;
 
   if (data?.quotes?.length > 0) {
     return data.quotes;

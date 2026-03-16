@@ -1,7 +1,8 @@
 import { memo } from 'react';
-import { Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Clock, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EconomicEvent } from '@/lib/mock-data';
+import { getEventDescription } from '@/lib/event-descriptions';
 
 function SurpriseIndicator({ actual, forecast }: { actual?: string; forecast?: string }) {
   if (!actual || !forecast) return null;
@@ -117,6 +118,7 @@ export const EventDetail = memo(function EventDetail({ event }: { event: Economi
   const status = getEventStatus(event);
   const isPast = status !== 'upcoming';
   const isEarnings = event.category === 'earnings';
+  const description = !isEarnings ? getEventDescription(event.name) : undefined;
 
   const hasActual = !!event.actual;
   const hasForecast = !!event.forecast;
@@ -199,6 +201,14 @@ export const EventDetail = memo(function EventDetail({ event }: { event: Economi
               <p className="text-xs text-muted-foreground italic">수치 데이터 없음 (연설/회의 등)</p>
             )}
           </>
+        )}
+
+        {/* 지표 설명 */}
+        {description && (
+          <div className="flex gap-2 pt-1 border-t border-border/20">
+            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+          </div>
         )}
       </div>
     </div>
