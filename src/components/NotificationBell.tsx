@@ -203,7 +203,9 @@ export const NotificationBell = memo(function NotificationBell({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-0 px-4 pb-4 space-y-4">
+          <TabsContent value="settings" className="mt-0">
+            <ScrollArea className="max-h-96">
+            <div className="px-4 pb-4 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium">급등/급락 알림</label>
@@ -311,6 +313,8 @@ export const NotificationBell = memo(function NotificationBell({
                 </>
               )}
             </div>
+            </div>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </PopoverContent>
