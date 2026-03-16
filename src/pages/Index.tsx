@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, lazy, Suspense, startTransition, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator } from 'lucide-react';
 import { format } from 'date-fns';
@@ -92,6 +93,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>랩메린이 — 해외선물 경제지표 대시보드</title>
+        <meta name="description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에. 강세/약세 시그널과 기술적 분석을 제공합니다." />
+        <link rel="canonical" href="https://lab.merini.com/" />
+        <meta property="og:title" content="랩메린이 — 해외선물 경제지표 대시보드" />
+        <meta property="og:description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 강세/약세 시그널을 한눈에 확인하세요." />
+        <meta property="og:url" content="https://lab.merini.com/" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       {/* Skip to main content */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg">
         메인 콘텐츠로 건너뛰기
