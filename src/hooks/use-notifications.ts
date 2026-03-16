@@ -41,7 +41,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
 
 const PREFS_KEY = 'fx-notification-prefs';
 const NOTIFS_KEY = 'fx-notifications';
-const PRICE_ALERTS_KEY = 'fx-price-alerts';
+export const PRICE_ALERTS_KEY = 'fx-price-alerts';
 const MAX_NOTIFICATIONS = 50;
 
 function loadPrefs(): NotificationPrefs {
@@ -62,13 +62,17 @@ function loadNotifications(): AppNotification[] {
   }
 }
 
-function loadPriceAlerts(): PriceAlert[] {
+export function loadPriceAlerts(): PriceAlert[] {
   try {
     const saved = localStorage.getItem(PRICE_ALERTS_KEY);
     return saved ? JSON.parse(saved) : [];
   } catch {
     return [];
   }
+}
+
+export function savePriceAlerts(alerts: PriceAlert[]): void {
+  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts));
 }
 
 export function useNotifications(
@@ -79,8 +83,12 @@ export function useNotifications(
   const [notifications, setNotifications] = useState<AppNotification[]>(loadNotifications);
   const [prefs, setPrefs] = useState<NotificationPrefs>(loadPrefs);
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(loadPriceAlerts);
+  const priceAlertsRef = useRef<PriceAlert[]>([]);
   const prevQuotesRef = useRef<Map<string, number>>(new Map());
   const checkedEventsRef = useRef<Set<string>>(new Set());
+
+  // priceAlerts ref 동기화 — 체크 effect에서 dep 없이 최신값 읽기 위해
+  useEffect(() => { priceAlertsRef.current = priceAlerts; }, [priceAlerts]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -174,7 +182,7 @@ export function useNotifications(
   useEffect(() => {
     if (!quotes || quotes.length === 0) return;
 
-    const activeAlerts = priceAlerts.filter(a => !a.triggered);
+    const activeAlerts = priceAlertsRef.current.filter(a => !a.triggered);
     if (activeAlerts.length === 0) return;
 
     const triggeredIds: string[] = [];
@@ -201,11 +209,12 @@ export function useNotifications(
     });
 
     if (triggeredIds.length > 0) {
+      const triggeredSet = new Set(triggeredIds);
       setPriceAlerts(prev =>
-        prev.map(a => triggeredIds.includes(a.id) ? { ...a, triggered: true } : a)
+        prev.map(a => triggeredSet.has(a.id) ? { ...a, triggered: true } : a)
       );
     }
-  }, [quotes, priceAlerts, addNotification]);
+  }, [quotes, addNotification]);
 
   // Economic calendar alerts (upcoming high-importance events)
   useEffect(() => {

@@ -21,21 +21,7 @@ import { TechnicalIndicators } from '@/components/TechnicalIndicators';
 import { useTheme } from '@/hooks/use-theme';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PriceAlert } from '@/hooks/use-notifications';
-
-const PRICE_ALERTS_KEY = 'fx-price-alerts';
-
-function loadAllPriceAlerts(): PriceAlert[] {
-  try {
-    const saved = localStorage.getItem(PRICE_ALERTS_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveAllPriceAlerts(alerts: PriceAlert[]): void {
-  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts));
-}
+import { loadPriceAlerts, savePriceAlerts } from '@/hooks/use-notifications';
 
 // 자산별 관련 경제지표 키워드 매핑
 const ASSET_KEYWORDS: Record<string, string[]> = {
@@ -86,11 +72,11 @@ const AssetDetail = () => {
   const [targetInput, setTargetInput] = useState('');
   const [alertDirection, setAlertDirection] = useState<'above' | 'below'>('above');
   const [symbolAlerts, setSymbolAlerts] = useState<PriceAlert[]>(() =>
-    loadAllPriceAlerts().filter(a => a.symbol === upperSymbol)
+    loadPriceAlerts().filter(a => a.symbol === upperSymbol)
   );
 
   const refreshSymbolAlerts = useCallback(() => {
-    setSymbolAlerts(loadAllPriceAlerts().filter(a => a.symbol === upperSymbol));
+    setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol));
   }, [upperSymbol]);
 
   const handleAddAlert = useCallback(() => {
@@ -99,7 +85,6 @@ const AssetDetail = () => {
       toast.error('유효한 가격을 입력해주세요');
       return;
     }
-    const all = loadAllPriceAlerts();
     const newAlert: PriceAlert = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       symbol: upperSymbol,
@@ -109,19 +94,19 @@ const AssetDetail = () => {
       createdAt: Date.now(),
       triggered: false,
     };
+    const all = loadPriceAlerts();
     all.unshift(newAlert);
-    saveAllPriceAlerts(all);
+    savePriceAlerts(all);
     setTargetInput('');
-    refreshSymbolAlerts();
+    setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol));
     const dirLabel = alertDirection === 'above' ? '이상' : '이하';
     toast.success(`가격 알림 등록 완료`, { description: `${upperSymbol} ${price.toLocaleString()} ${dirLabel} 도달 시 알림` });
-  }, [targetInput, alertDirection, upperSymbol, detail, refreshSymbolAlerts]);
+  }, [targetInput, alertDirection, upperSymbol, detail]);
 
   const handleDeleteAlert = useCallback((id: string) => {
-    const all = loadAllPriceAlerts().filter(a => a.id !== id);
-    saveAllPriceAlerts(all);
-    refreshSymbolAlerts();
-  }, [refreshSymbolAlerts]);
+    savePriceAlerts(loadPriceAlerts().filter(a => a.id !== id));
+    setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol));
+  }, [upperSymbol]);
 
   const technicals = useMemo(() => {
     if (!dailyData?.length || !quote) return [];
@@ -314,6 +299,7 @@ const AssetDetail = () => {
   const gaugePercent = ((signal!.score + 100) / 200) * 100;
 
   const chartColor = isUp ? 'hsl(var(--up))' : 'hsl(var(--down))';
+  const activeAlertCount = symbolAlerts.filter(a => !a.triggered).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -371,9 +357,9 @@ const AssetDetail = () => {
                   aria-label="가격 알림 설정"
                 >
                   <BellPlus className="w-4 h-4" />
-                  {symbolAlerts.filter(a => !a.triggered).length > 0 && (
+                  {activeAlertCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-primary-foreground text-[8px] font-bold flex items-center justify-center">
-                      {symbolAlerts.filter(a => !a.triggered).length}
+                      {activeAlertCount}
                     </span>
                   )}
                 </Button>
