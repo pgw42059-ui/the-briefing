@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, lazy, Suspense, startTransition, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator } from 'lucide-react';
+import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator, AlertCircle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { InstallBanner } from '@/components/InstallBanner';
 import { Footer } from '@/components/Footer';
@@ -37,7 +37,7 @@ const ALL_SYMBOLS = [...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS, ...FX_SYMBOLS];
 
 const Index = () => {
   const navigate = useNavigate();
-  const { data: quotes, isLoading, isError, isPlaceholderData } = useMarketQuotes();
+  const { data: quotes, isLoading, isError, isPlaceholderData, refetch } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
   const { data: fearGreed } = useFearGreed();
   const [signals, setSignals] = useState<ReturnType<typeof computeAllSignals>>([]);
@@ -212,6 +212,25 @@ const Index = () => {
 
           {/* === 시세 탭 === */}
           <TabsContent value="quotes" className="mt-0 space-y-4 sm:space-y-5">
+            {/* 시세 로딩 에러 배너 */}
+            {isError && (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-destructive/30 bg-destructive/5" role="alert">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span className="text-sm font-medium">시세 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refetch()}
+                  className="shrink-0 h-8 text-xs gap-1.5 border-destructive/40 text-destructive hover:bg-destructive/10"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  재시도
+                </Button>
+              </div>
+            )}
+
             {/* 실시간 시세 — 섹션별 컴팩트 리스트 */}
             <section aria-labelledby="quotes-heading">
               <div className="flex items-center justify-between mb-3 sm:mb-4">

@@ -25,7 +25,6 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
   const { data: macroEvents = [], isLoading: macroLoading } = useEconomicEvents();
   const { data: earningsEvents = [], isLoading: earningsLoading } = useEarningsEvents();
 
-  const hasEarningsKey = !!import.meta.env.VITE_FINNHUB_KEY;
   const isLoading = category === 'macro' ? macroLoading : earningsLoading;
 
   // Tag macro events with category field if missing
@@ -193,24 +192,6 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
                 <Skeleton className="h-10 flex-1 rounded-lg" />
               </div>
             ))}
-          </div>
-        ) : category === 'earnings' && !hasEarningsKey ? (
-          <div className="px-6 py-10 text-center space-y-3">
-            <p className="text-3xl">🔑</p>
-            <p className="text-sm font-semibold">Finnhub API 키 필요</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              기업 실적 데이터는 Finnhub 무료 API를 사용합니다.<br />
-              아래 단계를 따라 <span className="font-mono">.env</span> 파일에 키를 추가하세요.
-            </p>
-            <ol className="text-xs text-left inline-block space-y-1.5 mt-2 bg-muted/40 rounded-xl p-4 border border-border/30">
-              <li><span className="font-semibold text-foreground">1.</span> <a href="https://finnhub.io/register" target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">finnhub.io/register</a> 에서 무료 가입</li>
-              <li><span className="font-semibold text-foreground">2.</span> 대시보드에서 API 키 복사</li>
-              <li><span className="font-semibold text-foreground">3.</span> <span className="font-mono bg-muted px-1 rounded">.env</span> 파일에 추가:</li>
-              <li className="font-mono text-[11px] bg-background border border-border/40 rounded px-2 py-1 select-all">
-                VITE_FINNHUB_KEY=your_api_key_here
-              </li>
-              <li><span className="font-semibold text-foreground">4.</span> 개발 서버 재시작</li>
-            </ol>
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="px-4 py-12 text-center">
