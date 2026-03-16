@@ -48,7 +48,7 @@ const CompactQuoteRow = memo(function CompactQuoteRow({
         {showWatchlist && (
           <button
             onClick={(e) => { e.stopPropagation(); onToggleWatchlist?.(); }}
-            className="shrink-0 p-0.5 hover:scale-110 transition-transform ml-0.5"
+            className="shrink-0 p-1 hover:scale-110 transition-transform ml-0.5"
             aria-label={isWatched ? `${quote.nameKr} 관심종목 해제` : `${quote.nameKr} 관심종목 추가`}
             aria-pressed={isWatched}
           >
