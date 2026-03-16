@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { Download, Share, MoreVertical, Plus, ArrowLeft, Smartphone, Monitor, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,12 @@ export default function InstallPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>앱 설치 안내 — 랩메린이</title>
+        <meta name="description" content="랩메린이를 홈 화면에 추가하면 앱처럼 빠르게 실행할 수 있습니다. iOS, Android, 데스크톱 설치 방법을 안내해드립니다." />
+        <link rel="canonical" href="https://lab.merini.com/install" />
+        <meta name="robots" content="noindex, follow" />
+      </Helmet>
       <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link to="/">
