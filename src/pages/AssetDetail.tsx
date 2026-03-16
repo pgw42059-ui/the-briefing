@@ -302,8 +302,49 @@ const AssetDetail = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold">📖 종목 개요</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground leading-relaxed">{detail.description}</p>
+
+            {/* 스펙 그리드 */}
+            {(detail.exchange || detail.tradingHours || detail.contractSize || detail.tickInfo) && (
+              <div className="grid grid-cols-2 gap-2">
+                {detail.exchange && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">🏛️ 거래소</p>
+                    <p className="text-xs font-semibold">{detail.exchange}</p>
+                  </div>
+                )}
+                {detail.tradingHours && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">🕐 거래 시간 (KST)</p>
+                    <p className="text-xs font-semibold">{detail.tradingHours}</p>
+                  </div>
+                )}
+                {detail.contractSize && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">📦 계약 단위</p>
+                    <p className="text-xs font-semibold">{detail.contractSize}</p>
+                  </div>
+                )}
+                {detail.tickInfo && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">⚡ 틱 정보</p>
+                    <p className="text-xs font-semibold">{detail.tickInfo}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 태그 */}
+            {detail.tags && detail.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {detail.tags.map((tag) => (
+                  <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
