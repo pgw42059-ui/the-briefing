@@ -329,86 +329,63 @@ const AssetDetail = () => {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5 sm:space-y-8">
-        {/* Overview */}
+
+        {/* 1. AI 시장 브리핑 - 최상단 */}
         <Card className="rounded-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">📖 종목 개요</CardTitle>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg font-bold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                🤖 AI 시장 브리핑
+                {!analysisLoading && !analysisError && analysisData && analysisData.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground font-normal bg-muted px-1.5 py-0.5 rounded">Gemini</span>
+                )}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={forceRefetch}
+                disabled={analysisLoading}
+                className="h-7 w-7 rounded-lg"
+                aria-label="AI 분석 새로고침"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${analysisLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground leading-relaxed">{detail.description}</p>
-
-            {/* 스펙 그리드 */}
-            {(detail.exchange || detail.tradingHours || detail.contractSize || detail.tickInfo) && (
-              <div className="grid grid-cols-2 gap-2">
-                {detail.exchange && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
-                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">🏛️ 거래소</p>
-                    <p className="text-xs font-semibold">{detail.exchange}</p>
-                  </div>
-                )}
-                {detail.tradingHours && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
-                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">🕐 거래 시간 (KST)</p>
-                    <p className="text-xs font-semibold">{detail.tradingHours}</p>
-                  </div>
-                )}
-                {detail.contractSize && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
-                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">📦 계약 단위</p>
-                    <p className="text-xs font-semibold">{detail.contractSize}</p>
-                  </div>
-                )}
-                {detail.tickInfo && (
-                  <div className="p-2.5 rounded-lg bg-muted/50">
-                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">⚡ 틱 정보</p>
-                    <p className="text-xs font-semibold">{detail.tickInfo}</p>
-                  </div>
-                )}
+          <CardContent>
+            {analysisLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-12 w-4/5 rounded-lg" />
               </div>
-            )}
-
-            {/* 태그 */}
-            {detail.tags && detail.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {detail.tags.map((tag) => (
-                  <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                    #{tag}
-                  </span>
+            ) : analysisError ? (
+              <p className="text-xs text-muted-foreground italic text-center py-4">AI 분석을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
+            ) : !analysisData?.length ? (
+              <p className="text-xs text-muted-foreground italic text-center py-4">분석 데이터를 준비 중입니다.</p>
+            ) : (
+              <div className="space-y-2">
+                {analysisData.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-2.5 p-3 rounded-lg text-sm ${
+                      item.type === 'alert'
+                        ? 'bg-down-muted border border-down/20'
+                        : 'bg-primary/5 border border-primary/20'
+                    }`}
+                  >
+                    <span className="shrink-0 text-base leading-relaxed">
+                      {item.type === 'alert' ? '⚠️' : 'ℹ️'}
+                    </span>
+                    <p className="leading-relaxed">{item.text}</p>
+                  </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Price Details */}
-        <Card className="rounded-xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">💰 가격 상세</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              {(() => {
-                const prevClose = quote.price - quote.change;
-                const todayOpen = chartData?.[0]?.open ?? null;
-                return [
-                  { label: '현재가', value: quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '💵' },
-                  { label: '전일대비', value: `${isUp ? '+' : ''}${quote.change.toFixed(2)}`, color: isUp ? 'text-up' : 'text-down', emoji: <img src={isUp ? '/icons/icon-chart-up.png' : '/icons/icon-chart-down.png'} alt="" className="w-3.5 h-3.5 inline-block align-middle" /> },
-                  { label: '전일 종가', value: prevClose.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '🕐' },
-                  { label: '금일 시가', value: todayOpen != null ? todayOpen.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-', emoji: '🔔' },
-                  { label: '고가', value: quote.high.toLocaleString(), emoji: '⬆️' },
-                  { label: '저가', value: quote.low.toLocaleString(), emoji: '⬇️' },
-                ];
-              })().map((item, i) => (
-                <div key={i} className="text-center p-2.5 rounded-xl bg-muted/50">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-1 font-medium">{item.emoji} {item.label}</p>
-                  <p className={`text-sm sm:text-lg font-extrabold font-mono ${item.color || ''}`}>{item.value}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Price Chart */}
+        {/* 2. 가격 추이 + 가격 상세 통합 */}
         <Card className="rounded-xl">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -428,7 +405,7 @@ const AssetDetail = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {chartLoading ? (
               <Skeleton className="h-[220px] sm:h-[280px] w-full rounded-lg" />
             ) : (
@@ -436,9 +413,30 @@ const AssetDetail = () => {
                 <SvgAreaChart data={chartData || []} color={chartColor} className="h-full w-full" />
               </div>
             )}
+            {/* 가격 상세 - 차트 하단 4칸 */}
+            {(() => {
+              const prevClose = quote.price - quote.change;
+              const todayOpen = chartData?.[0]?.open ?? null;
+              return (
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/20">
+                  {[
+                    { label: '전일 종가', value: prevClose.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '🕐' },
+                    { label: '금일 시가', value: todayOpen != null ? todayOpen.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-', emoji: '🔔' },
+                    { label: '고가', value: quote.high.toLocaleString(), emoji: '⬆️' },
+                    { label: '저가', value: quote.low.toLocaleString(), emoji: '⬇️' },
+                  ].map((item, i) => (
+                    <div key={i} className="text-center p-2 rounded-xl bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground mb-1 font-medium">{item.emoji} {item.label}</p>
+                      <p className="text-xs sm:text-sm font-bold font-mono">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
+        {/* 3. 시그널 + 지지/저항선 + 52주 레인지 2-col */}
         <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
           {/* Sentiment */}
           <Card className="rounded-xl">
@@ -495,40 +493,8 @@ const AssetDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Key Info */}
+          {/* 지지/저항선 + 52주 레인지 */}
           <div className="space-y-4 sm:space-y-5">
-            {/* 52-Week Range */}
-            {quote.week52High != null && quote.week52Low != null && quote.week52High > quote.week52Low && (() => {
-              const pct = Math.min(100, Math.max(0, ((quote.price - quote.week52Low!) / (quote.week52High! - quote.week52Low!)) * 100));
-              return (
-                <Card className="rounded-xl">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-bold">📏 52주 레인지</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1.5 font-medium">
-                      <span className="font-mono">{quote.week52Low!.toLocaleString()}</span>
-                      <span>현재가 ({pct.toFixed(1)}%)</span>
-                      <span className="font-mono">{quote.week52High!.toLocaleString()}</span>
-                    </div>
-                    <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                      <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-down/50 via-muted-foreground/20 to-up/50" style={{ width: '100%' }} />
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card shadow-md"
-                        style={{
-                          left: `calc(${pct}% - 8px)`,
-                          backgroundColor: isUp ? 'hsl(var(--up))' : 'hsl(var(--down))',
-                        }}
-                      />
-                    </div>
-                    <p className="text-center text-sm font-mono font-bold mt-2">
-                      {quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })()}
-
             {/* Key Levels - now dynamic */}
             {keyLevels && (
               <Card className="rounded-xl">
@@ -564,81 +530,113 @@ const AssetDetail = () => {
               </Card>
             )}
 
-            {/* Related Events */}
-            <Card className="rounded-xl">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-warning" />
-                  관련 경제 이벤트
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {relatedEvents.map((ev, i) => (
-                  <div key={i} className="flex items-center gap-2.5 text-sm p-2 rounded-lg bg-warning/5">
-                    <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
-                    <span className="flex-1">{ev.label}</span>
-                    {ev.isReal && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">실시간</span>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            {/* 52-Week Range */}
+            {quote.week52High != null && quote.week52Low != null && quote.week52High > quote.week52Low && (() => {
+              const pct = Math.min(100, Math.max(0, ((quote.price - quote.week52Low!) / (quote.week52High! - quote.week52Low!)) * 100));
+              return (
+                <Card className="rounded-xl">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-bold">📏 52주 레인지</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1.5 font-medium">
+                      <span className="font-mono">{quote.week52Low!.toLocaleString()}</span>
+                      <span>현재가 ({pct.toFixed(1)}%)</span>
+                      <span className="font-mono">{quote.week52High!.toLocaleString()}</span>
+                    </div>
+                    <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                      <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-down/50 via-muted-foreground/20 to-up/50" style={{ width: '100%' }} />
+                      <div
+                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card shadow-md"
+                        style={{
+                          left: `calc(${pct}% - 8px)`,
+                          backgroundColor: isUp ? 'hsl(var(--up))' : 'hsl(var(--down))',
+                        }}
+                      />
+                    </div>
+                    <p className="text-center text-sm font-mono font-bold mt-2">
+                      {quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </div>
         </div>
 
-        {/* Technical Indicators */}
-        {technicals.length > 0 && <TechnicalIndicators indicators={technicals} />}
-
-        {/* AI 시장 브리핑 */}
+        {/* 4. 관련 경제 이벤트 - full-width 승격 */}
         <Card className="rounded-xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base sm:text-lg font-bold flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                🤖 AI 시장 브리핑
-                {!analysisLoading && !analysisError && analysisData && analysisData.length > 0 && (
-                  <span className="text-[10px] text-muted-foreground font-normal bg-muted px-1.5 py-0.5 rounded">Gemini</span>
-                )}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={forceRefetch}
-                disabled={analysisLoading}
-                className="h-7 w-7 rounded-lg"
-                aria-label="AI 분석 새로고침"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${analysisLoading ? 'animate-spin' : ''}`} />
-              </Button>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-warning" />
+              관련 경제 이벤트
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {analysisLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-12 w-full rounded-lg" />
-                <Skeleton className="h-12 w-full rounded-lg" />
-                <Skeleton className="h-12 w-4/5 rounded-lg" />
-              </div>
-            ) : analysisError ? (
-              <p className="text-xs text-muted-foreground italic text-center py-4">AI 분석을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
-            ) : !analysisData?.length ? (
-              <p className="text-xs text-muted-foreground italic text-center py-4">분석 데이터를 준비 중입니다.</p>
+          <CardContent className="space-y-2">
+            {relatedEvents.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">관련 경제 이벤트가 없습니다.</p>
             ) : (
-              <div className="space-y-2">
-                {analysisData.map((item, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-start gap-2.5 p-3 rounded-lg text-sm ${
-                      item.type === 'alert'
-                        ? 'bg-down-muted border border-down/20'
-                        : 'bg-primary/5 border border-primary/20'
-                    }`}
-                  >
-                    <span className="shrink-0 text-base leading-relaxed">
-                      {item.type === 'alert' ? '⚠️' : 'ℹ️'}
-                    </span>
-                    <p className="leading-relaxed">{item.text}</p>
+              relatedEvents.map((ev, i) => (
+                <div key={i} className="flex items-center gap-2.5 text-sm p-2 rounded-lg bg-warning/5">
+                  <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
+                  <span className="flex-1">{ev.label}</span>
+                  {ev.isReal && (
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">실시간</span>
+                  )}
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 5. Technical Indicators */}
+        {technicals.length > 0 && <TechnicalIndicators indicators={technicals} />}
+
+        {/* 6. 종목 개요 - 최하단 */}
+        <Card className="rounded-xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-bold">📖 종목 개요</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground leading-relaxed">{detail.description}</p>
+
+            {/* 스펙 그리드 */}
+            {(detail.exchange || detail.tradingHours || detail.contractSize || detail.tickInfo) && (
+              <div className="grid grid-cols-2 gap-2">
+                {detail.exchange && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">🏛️ 거래소</p>
+                    <p className="text-xs font-semibold">{detail.exchange}</p>
                   </div>
+                )}
+                {detail.tradingHours && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">🕐 거래 시간 (KST)</p>
+                    <p className="text-xs font-semibold">{detail.tradingHours}</p>
+                  </div>
+                )}
+                {detail.contractSize && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">📦 계약 단위</p>
+                    <p className="text-xs font-semibold">{detail.contractSize}</p>
+                  </div>
+                )}
+                {detail.tickInfo && (
+                  <div className="p-2.5 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">⚡ 틱 정보</p>
+                    <p className="text-xs font-semibold">{detail.tickInfo}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 태그 */}
+            {detail.tags && detail.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {detail.tags.map((tag) => (
+                  <span key={tag} className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    #{tag}
+                  </span>
                 ))}
               </div>
             )}
