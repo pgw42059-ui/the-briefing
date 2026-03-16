@@ -1,10 +1,12 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Target, ShieldAlert, Sun, Moon, RefreshCw, Share2 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, Target, ShieldAlert, Sun, Moon, RefreshCw, Share2, BellPlus, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SvgAreaChart } from '@/components/SvgAreaChart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { mockAssetDetails } from '@/lib/mock-data';
@@ -18,6 +20,22 @@ import { computeKeyLevels } from '@/lib/compute-levels';
 import { TechnicalIndicators } from '@/components/TechnicalIndicators';
 import { useTheme } from '@/hooks/use-theme';
 import { useQueryClient } from '@tanstack/react-query';
+import type { PriceAlert } from '@/hooks/use-notifications';
+
+const PRICE_ALERTS_KEY = 'fx-price-alerts';
+
+function loadAllPriceAlerts(): PriceAlert[] {
+  try {
+    const saved = localStorage.getItem(PRICE_ALERTS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveAllPriceAlerts(alerts: PriceAlert[]): void {
+  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts));
+}
 
 // 자산별 관련 경제지표 키워드 매핑
 const ASSET_KEYWORDS: Record<string, string[]> = {
@@ -63,6 +81,47 @@ const AssetDetail = () => {
   const quote = quotes?.find((q) => q.symbol === upperSymbol);
   const { theme, toggle: toggleTheme } = useTheme();
 
+  // 가격 목표 알림 상태
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [targetInput, setTargetInput] = useState('');
+  const [alertDirection, setAlertDirection] = useState<'above' | 'below'>('above');
+  const [symbolAlerts, setSymbolAlerts] = useState<PriceAlert[]>(() =>
+    loadAllPriceAlerts().filter(a => a.symbol === upperSymbol)
+  );
+
+  const refreshSymbolAlerts = useCallback(() => {
+    setSymbolAlerts(loadAllPriceAlerts().filter(a => a.symbol === upperSymbol));
+  }, [upperSymbol]);
+
+  const handleAddAlert = useCallback(() => {
+    const price = parseFloat(targetInput.replace(/,/g, ''));
+    if (isNaN(price) || price <= 0) {
+      toast.error('유효한 가격을 입력해주세요');
+      return;
+    }
+    const all = loadAllPriceAlerts();
+    const newAlert: PriceAlert = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      symbol: upperSymbol,
+      symbolName: detail?.nameKr ?? upperSymbol,
+      targetPrice: price,
+      direction: alertDirection,
+      createdAt: Date.now(),
+      triggered: false,
+    };
+    all.unshift(newAlert);
+    saveAllPriceAlerts(all);
+    setTargetInput('');
+    refreshSymbolAlerts();
+    const dirLabel = alertDirection === 'above' ? '이상' : '이하';
+    toast.success(`가격 알림 등록 완료`, { description: `${upperSymbol} ${price.toLocaleString()} ${dirLabel} 도달 시 알림` });
+  }, [targetInput, alertDirection, upperSymbol, detail, refreshSymbolAlerts]);
+
+  const handleDeleteAlert = useCallback((id: string) => {
+    const all = loadAllPriceAlerts().filter(a => a.id !== id);
+    saveAllPriceAlerts(all);
+    refreshSymbolAlerts();
+  }, [refreshSymbolAlerts]);
 
   const technicals = useMemo(() => {
     if (!dailyData?.length || !quote) return [];
@@ -302,6 +361,96 @@ const AssetDetail = () => {
                 {isUp ? '+' : ''}{quote.change.toFixed(2)} ({isUp ? '+' : ''}{quote.changePercent.toFixed(2)}%)
               </div>
             </div>
+            {/* 가격 알림 설정 Popover */}
+            <Popover open={alertOpen} onOpenChange={(o) => { setAlertOpen(o); if (o) refreshSymbolAlerts(); }}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl relative"
+                  aria-label="가격 알림 설정"
+                >
+                  <BellPlus className="w-4 h-4" />
+                  {symbolAlerts.filter(a => !a.triggered).length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-primary text-primary-foreground text-[8px] font-bold flex items-center justify-center">
+                      {symbolAlerts.filter(a => !a.triggered).length}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-0 rounded-xl" align="end">
+                <div className="p-4 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold mb-0.5">가격 알림 설정</h3>
+                    <p className="text-[11px] text-muted-foreground">{detail.nameKr} ({upperSymbol}) 목표가 도달 시 알림</p>
+                  </div>
+
+                  {/* 현재가 표시 */}
+                  <div className="px-3 py-2 rounded-lg bg-muted/50 text-center">
+                    <p className="text-[10px] text-muted-foreground font-medium mb-0.5">현재가</p>
+                    <p className="text-base font-extrabold font-mono">{quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  </div>
+
+                  {/* 방향 선택 */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant={alertDirection === 'above' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 text-xs gap-1.5"
+                      onClick={() => setAlertDirection('above')}
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                      이 가격 이상
+                    </Button>
+                    <Button
+                      variant={alertDirection === 'below' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 text-xs gap-1.5"
+                      onClick={() => setAlertDirection('below')}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                      이 가격 이하
+                    </Button>
+                  </div>
+
+                  {/* 목표가 입력 */}
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="목표가 입력"
+                      value={targetInput}
+                      onChange={e => setTargetInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddAlert()}
+                      className="h-8 text-xs font-mono"
+                    />
+                    <Button size="sm" className="h-8 px-3 shrink-0" onClick={handleAddAlert}>
+                      등록
+                    </Button>
+                  </div>
+
+                  {/* 이 종목 알림 목록 */}
+                  {symbolAlerts.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">등록된 알림</p>
+                      {symbolAlerts.map(alert => (
+                        <div key={alert.id} className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs ${alert.triggered ? 'bg-muted/30 opacity-60' : 'bg-muted/50'}`}>
+                          <span className={`text-sm ${alert.direction === 'above' ? 'text-up' : 'text-down'}`}>
+                            {alert.direction === 'above' ? '↑' : '↓'}
+                          </span>
+                          <span className="font-mono font-semibold flex-1">{alert.targetPrice.toLocaleString()}</span>
+                          <span className="text-muted-foreground">{alert.direction === 'above' ? '이상' : '이하'}</span>
+                          {alert.triggered && <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">완료</span>}
+                          <Button variant="ghost" size="icon" className="h-5 w-5 rounded shrink-0" onClick={() => handleDeleteAlert(alert.id)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <Button
               variant="ghost"
               size="icon"

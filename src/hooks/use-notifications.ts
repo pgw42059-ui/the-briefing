@@ -13,6 +13,16 @@ export interface AppNotification {
   symbol?: string;
 }
 
+export interface PriceAlert {
+  id: string;
+  symbol: string;
+  symbolName: string; // 한국어 이름 (표시용)
+  targetPrice: number;
+  direction: 'above' | 'below'; // 이 가격 이상 / 이하 도달 시
+  createdAt: number;
+  triggered: boolean;
+}
+
 interface NotificationPrefs {
   priceThreshold: number; // percent
   calendarEnabled: boolean;
@@ -31,6 +41,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
 
 const PREFS_KEY = 'fx-notification-prefs';
 const NOTIFS_KEY = 'fx-notifications';
+const PRICE_ALERTS_KEY = 'fx-price-alerts';
 const MAX_NOTIFICATIONS = 50;
 
 function loadPrefs(): NotificationPrefs {
@@ -51,6 +62,15 @@ function loadNotifications(): AppNotification[] {
   }
 }
 
+function loadPriceAlerts(): PriceAlert[] {
+  try {
+    const saved = localStorage.getItem(PRICE_ALERTS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function useNotifications(
   quotes?: FuturesQuote[],
   events?: EconomicEvent[],
@@ -58,12 +78,13 @@ export function useNotifications(
 ) {
   const [notifications, setNotifications] = useState<AppNotification[]>(loadNotifications);
   const [prefs, setPrefs] = useState<NotificationPrefs>(loadPrefs);
+  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(loadPriceAlerts);
   const prevQuotesRef = useRef<Map<string, number>>(new Map());
   const checkedEventsRef = useRef<Set<string>>(new Set());
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Persist
+  // Persist notifications
   useEffect(() => {
     localStorage.setItem(NOTIFS_KEY, JSON.stringify(notifications.slice(0, MAX_NOTIFICATIONS)));
   }, [notifications]);
@@ -71,6 +92,11 @@ export function useNotifications(
   useEffect(() => {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
   }, [prefs]);
+
+  // Persist price alerts
+  useEffect(() => {
+    localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(priceAlerts));
+  }, [priceAlerts]);
 
   const addNotification = useCallback((notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
     const newNotif: AppNotification = {
@@ -104,7 +130,7 @@ export function useNotifications(
     });
   }, []);
 
-  // Price movement alerts
+  // Price movement alerts (% 변동)
   useEffect(() => {
     if (!quotes || quotes.length === 0) return;
 
@@ -143,6 +169,43 @@ export function useNotifications(
       prevMap.set(q.symbol, q.price);
     });
   }, [quotes, prefs.priceThreshold, prefs.watchlistEnabled, watchlistSymbols, addNotification]);
+
+  // Price target alerts (특정 가격 도달)
+  useEffect(() => {
+    if (!quotes || quotes.length === 0) return;
+
+    const activeAlerts = priceAlerts.filter(a => !a.triggered);
+    if (activeAlerts.length === 0) return;
+
+    const triggeredIds: string[] = [];
+
+    activeAlerts.forEach(alert => {
+      const q = quotes.find(q => q.symbol === alert.symbol);
+      if (!q) return;
+
+      const hit =
+        alert.direction === 'above'
+          ? q.price >= alert.targetPrice
+          : q.price <= alert.targetPrice;
+
+      if (hit) {
+        triggeredIds.push(alert.id);
+        const dirLabel = alert.direction === 'above' ? '이상' : '이하';
+        addNotification({
+          type: 'price',
+          title: `🎯 가격 목표 도달: ${alert.symbolName}`,
+          message: `${alert.symbol} 현재가 ${q.price.toLocaleString()} — 목표가 ${alert.targetPrice.toLocaleString()} ${dirLabel} 도달`,
+          symbol: alert.symbol,
+        });
+      }
+    });
+
+    if (triggeredIds.length > 0) {
+      setPriceAlerts(prev =>
+        prev.map(a => triggeredIds.includes(a.id) ? { ...a, triggered: true } : a)
+      );
+    }
+  }, [quotes, priceAlerts, addNotification]);
 
   // Economic calendar alerts (upcoming high-importance events)
   useEffect(() => {
@@ -194,6 +257,33 @@ export function useNotifications(
     setPrefs(prev => ({ ...prev, ...update }));
   }, []);
 
+  // 가격 목표 알림 CRUD
+  const addPriceAlert = useCallback((
+    symbol: string,
+    symbolName: string,
+    targetPrice: number,
+    direction: 'above' | 'below'
+  ) => {
+    const newAlert: PriceAlert = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      symbol,
+      symbolName,
+      targetPrice,
+      direction,
+      createdAt: Date.now(),
+      triggered: false,
+    };
+    setPriceAlerts(prev => [newAlert, ...prev]);
+  }, []);
+
+  const deletePriceAlert = useCallback((id: string) => {
+    setPriceAlerts(prev => prev.filter(a => a.id !== id));
+  }, []);
+
+  const clearTriggeredAlerts = useCallback(() => {
+    setPriceAlerts(prev => prev.filter(a => !a.triggered));
+  }, []);
+
   // 브라우저 알림 권한 요청
   const requestBrowserPermission = useCallback(async (): Promise<boolean> => {
     if (!('Notification' in window)) return false;
@@ -221,5 +311,9 @@ export function useNotifications(
     clearAll,
     addNotification,
     requestBrowserPermission,
+    priceAlerts,
+    addPriceAlert,
+    deletePriceAlert,
+    clearTriggeredAlerts,
   };
 }

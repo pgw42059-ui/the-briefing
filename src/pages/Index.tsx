@@ -70,7 +70,7 @@ const Index = () => {
   }, [allEvents]);
 
   // isPlaceholderData일 때는 mock 데이터 → 실제 데이터 전환 시 가짜 알림 방지
-  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications, requestBrowserPermission } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
+  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications, requestBrowserPermission, priceAlerts, deletePriceAlert, clearTriggeredAlerts } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
 
   const { data: analysisItems, isLoading: analysisLoading, isError: analysisError, forceRefetch, isFetching: analysisRefreshing, clearCache } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
 
@@ -162,6 +162,9 @@ const Index = () => {
                 onMarkOneRead={markOneRead}
                 onDeleteOne={deleteOne}
                 onClearAll={clearNotifications}
+                priceAlerts={priceAlerts}
+                onDeletePriceAlert={deletePriceAlert}
+                onClearTriggeredAlerts={clearTriggeredAlerts}
               />
             </Suspense>
             <Button variant="ghost" size="icon" onClick={toggle} className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}>

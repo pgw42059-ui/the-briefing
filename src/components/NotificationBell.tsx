@@ -1,5 +1,5 @@
 import { memo, useMemo, useState } from 'react';
-import { Bell, CheckCheck, Trash2, Settings2, TrendingUp, CalendarDays, Star, FileText, X, Eye } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Settings2, TrendingUp, CalendarDays, Star, FileText, X, Eye, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SwipeableNotificationItem } from '@/components/SwipeableNotificationItem';
-import type { AppNotification } from '@/hooks/use-notifications';
+import type { AppNotification, PriceAlert } from '@/hooks/use-notifications';
 
 interface NotificationBellProps {
   notifications: AppNotification[];
@@ -25,6 +25,9 @@ interface NotificationBellProps {
   onMarkOneRead: (id: string) => void;
   onDeleteOne: (id: string) => void;
   onClearAll: () => void;
+  priceAlerts?: PriceAlert[];
+  onDeletePriceAlert?: (id: string) => void;
+  onClearTriggeredAlerts?: () => void;
 }
 
 const typeConfig = {
@@ -80,7 +83,12 @@ export const NotificationBell = memo(function NotificationBell({
   onMarkOneRead,
   onDeleteOne,
   onClearAll,
+  priceAlerts = [],
+  onDeletePriceAlert,
+  onClearTriggeredAlerts,
 }: NotificationBellProps) {
+  const activeAlerts = priceAlerts.filter(a => !a.triggered);
+  const triggeredAlerts = priceAlerts.filter(a => a.triggered);
   const [filter, setFilter] = useState<'all' | 'price' | 'calendar' | 'watchlist' | 'summary'>('all');
   const filtered = useMemo(() => filter === 'all' ? notifications : notifications.filter(n => n.type === filter), [notifications, filter]);
   const grouped = useMemo(() => groupByDate(filtered), [filtered]);
@@ -261,6 +269,47 @@ export const NotificationBell = memo(function NotificationBell({
                 />
               </div>
             </div>
+
+            {/* 가격 목표 알림 목록 */}
+            {priceAlerts.length > 0 && (
+              <div className="space-y-2 pt-1 border-t border-border/40">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium">가격 목표 알림</p>
+                  {triggeredAlerts.length > 0 && onClearTriggeredAlerts && (
+                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2 rounded text-muted-foreground" onClick={onClearTriggeredAlerts}>
+                      완료 삭제
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  {priceAlerts.map(alert => (
+                    <div key={alert.id} className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs ${alert.triggered ? 'opacity-50 bg-muted/20' : 'bg-muted/50'}`}>
+                      <span className={`text-sm shrink-0 ${alert.direction === 'above' ? 'text-up' : 'text-down'}`}>
+                        {alert.direction === 'above' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </span>
+                      <span className="font-mono font-semibold shrink-0">{alert.targetPrice.toLocaleString()}</span>
+                      <span className="text-muted-foreground shrink-0">{alert.direction === 'above' ? '이상' : '이하'}</span>
+                      <span className="text-[10px] text-muted-foreground/70 truncate flex-1">{alert.symbolName}</span>
+                      {alert.triggered && <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">완료</span>}
+                      {onDeletePriceAlert && (
+                        <Button variant="ghost" size="icon" className="h-5 w-5 rounded shrink-0" onClick={() => onDeletePriceAlert(alert.id)}>
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {activeAlerts.length === 0 && triggeredAlerts.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground text-center">활성 알림 없음 — 상세 페이지에서 추가</p>
+                )}
+              </div>
+            )}
+            {priceAlerts.length === 0 && (
+              <div className="pt-1 border-t border-border/40">
+                <p className="text-xs font-medium mb-1">가격 목표 알림</p>
+                <p className="text-[10px] text-muted-foreground">종목 상세 페이지에서 🔔 버튼으로 목표가를 설정하세요</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </PopoverContent>
