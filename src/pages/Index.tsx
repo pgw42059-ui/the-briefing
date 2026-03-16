@@ -70,7 +70,7 @@ const Index = () => {
   }, [allEvents]);
 
   // isPlaceholderData일 때는 mock 데이터 → 실제 데이터 전환 시 가짜 알림 방지
-  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
+  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications, requestBrowserPermission } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
 
   const { data: analysisItems, isLoading: analysisLoading, isError: analysisError, forceRefetch, isFetching: analysisRefreshing, clearCache } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
 
@@ -150,6 +150,7 @@ const Index = () => {
                 unreadCount={unreadCount}
                 prefs={notifPrefs}
                 onUpdatePrefs={updateNotifPrefs}
+                onRequestBrowserPermission={requestBrowserPermission}
                 onMarkAllRead={markAllRead}
                 onMarkOneRead={markOneRead}
                 onDeleteOne={deleteOne}

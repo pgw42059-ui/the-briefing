@@ -18,6 +18,7 @@ interface NotificationPrefs {
   calendarEnabled: boolean;
   watchlistEnabled: boolean;
   summaryEnabled: boolean;
+  browserPushEnabled: boolean; // 브라우저 네이티브 알림
 }
 
 const DEFAULT_PREFS: NotificationPrefs = {
@@ -25,6 +26,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   calendarEnabled: true,
   watchlistEnabled: true,
   summaryEnabled: true,
+  browserPushEnabled: false,
 };
 
 const PREFS_KEY = 'fx-notification-prefs';
@@ -82,6 +84,24 @@ export function useNotifications(
 
     const emoji = notif.type === 'price' ? '📈' : notif.type === 'calendar' ? '📅' : notif.type === 'watchlist' ? '⭐' : '📋';
     toast(`${emoji} ${notif.title}`, { description: notif.message, duration: 5000 });
+
+    // 브라우저 네이티브 알림 — 탭이 백그라운드일 때 팝업 표시
+    setPrefs(currentPrefs => {
+      if (
+        currentPrefs.browserPushEnabled &&
+        'Notification' in window &&
+        Notification.permission === 'granted' &&
+        document.visibilityState === 'hidden'
+      ) {
+        new Notification(`${emoji} ${notif.title}`, {
+          body: notif.message,
+          icon: '/icons/pwa-192x192.png',
+          tag: notif.symbol ?? notif.type,
+          renotify: true,
+        });
+      }
+      return currentPrefs;
+    });
   }, []);
 
   // Price movement alerts
@@ -174,6 +194,22 @@ export function useNotifications(
     setPrefs(prev => ({ ...prev, ...update }));
   }, []);
 
+  // 브라우저 알림 권한 요청
+  const requestBrowserPermission = useCallback(async (): Promise<boolean> => {
+    if (!('Notification' in window)) return false;
+    if (Notification.permission === 'granted') {
+      updatePrefs({ browserPushEnabled: true });
+      return true;
+    }
+    if (Notification.permission === 'denied') return false;
+    const result = await Notification.requestPermission();
+    if (result === 'granted') {
+      updatePrefs({ browserPushEnabled: true });
+      return true;
+    }
+    return false;
+  }, [updatePrefs]);
+
   return {
     notifications,
     unreadCount,
@@ -184,5 +220,6 @@ export function useNotifications(
     deleteOne,
     clearAll,
     addNotification,
+    requestBrowserPermission,
   };
 }

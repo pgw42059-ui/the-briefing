@@ -17,8 +17,10 @@ interface NotificationBellProps {
     calendarEnabled: boolean;
     watchlistEnabled: boolean;
     summaryEnabled: boolean;
+    browserPushEnabled: boolean;
   };
   onUpdatePrefs: (update: Partial<NotificationBellProps['prefs']>) => void;
+  onRequestBrowserPermission: () => Promise<boolean>;
   onMarkAllRead: () => void;
   onMarkOneRead: (id: string) => void;
   onDeleteOne: (id: string) => void;
@@ -73,6 +75,7 @@ export const NotificationBell = memo(function NotificationBell({
   unreadCount,
   prefs,
   onUpdatePrefs,
+  onRequestBrowserPermission,
   onMarkAllRead,
   onMarkOneRead,
   onDeleteOne,
@@ -232,6 +235,30 @@ export const NotificationBell = memo(function NotificationBell({
                   <p className="text-[10px] text-muted-foreground">AI 시황 분석 업데이트 시</p>
                 </div>
                 <Switch checked={prefs.summaryEnabled} onCheckedChange={(v) => onUpdatePrefs({ summaryEnabled: v })} />
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                <div>
+                  <p className="text-xs font-medium">브라우저 알림</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {'Notification' in window
+                      ? Notification.permission === 'denied'
+                        ? '브라우저에서 차단됨 (설정에서 허용 필요)'
+                        : '탭이 백그라운드일 때 팝업 알림'}
+                      : '이 브라우저는 지원하지 않음'}
+                  </p>
+                </div>
+                <Switch
+                  checked={prefs.browserPushEnabled}
+                  disabled={!('Notification' in window) || Notification.permission === 'denied'}
+                  onCheckedChange={async (v) => {
+                    if (v) {
+                      await onRequestBrowserPermission();
+                    } else {
+                      onUpdatePrefs({ browserPushEnabled: false });
+                    }
+                  }}
+                />
               </div>
             </div>
           </TabsContent>

@@ -5,7 +5,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Use Yahoo Finance v8 chart API (no auth required)
 const SYMBOLS: Record<string, { yahoo: string; name: string; nameKr: string }> = {
   NQ: { yahoo: 'NQ=F', name: 'NASDAQ 100', nameKr: '나스닥' },
   ES: { yahoo: 'ES=F', name: 'S&P 500', nameKr: 'S&P 500' },
@@ -25,6 +24,11 @@ const SYMBOLS: Record<string, { yahoo: string; name: string; nameKr: string }> =
   USDCAD: { yahoo: 'CAD=X', name: 'USD/CAD', nameKr: '달러/캐나다' },
 };
 
+// ── 인메모리 캐시 (Deno isolate 워밍 시 Yahoo Finance 호출 절감) ──
+const CACHE_TTL_MS = 25_000; // 25초 (클라이언트 30초 주기보다 짧게)
+let cachedQuotes: any[] | null = null;
+let cacheTimestamp = 0;
+
 async function fetchQuote(yahooSymbol: string): Promise<any | null> {
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1d&range=1d`;
@@ -43,44 +47,74 @@ async function fetchQuote(yahooSymbol: string): Promise<any | null> {
   }
 }
 
+async function fetchAllQuotes(): Promise<any[]> {
+  const results = await Promise.allSettled(
+    Object.entries(SYMBOLS).map(async ([key, info]) => {
+      const meta = await fetchQuote(info.yahoo);
+      if (!meta) return null;
+
+      const price = meta.regularMarketPrice ?? 0;
+      const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
+      const change = Math.round((price - prevClose) * 100) / 100;
+      const changePercent = prevClose ? Math.round((change / prevClose) * 10000) / 100 : 0;
+
+      return {
+        symbol: key,
+        name: info.name,
+        nameKr: info.nameKr,
+        price: Math.round(price * 100) / 100,
+        change,
+        changePercent,
+        high: meta.regularMarketDayHigh ?? price,
+        low: meta.regularMarketDayLow ?? price,
+        volume: formatVolume(meta.regularMarketVolume ?? 0),
+        week52High: meta.fiftyTwoWeekHigh ?? null,
+        week52Low: meta.fiftyTwoWeekLow ?? null,
+      };
+    })
+  );
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
+    .map(r => r.value);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const results = await Promise.allSettled(
-      Object.entries(SYMBOLS).map(async ([key, info]) => {
-        const meta = await fetchQuote(info.yahoo);
-        if (!meta) return null;
+    const now = Date.now();
+    const isCacheValid = cachedQuotes !== null && (now - cacheTimestamp) < CACHE_TTL_MS;
 
-        const price = meta.regularMarketPrice ?? 0;
-        const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? price;
-        const change = Math.round((price - prevClose) * 100) / 100;
-        const changePercent = prevClose ? Math.round((change / prevClose) * 10000) / 100 : 0;
+    let quotes: any[];
+    let cacheStatus: string;
 
-        return {
-          symbol: key,
-          name: info.name,
-          nameKr: info.nameKr,
-          price: Math.round(price * 100) / 100,
-          change,
-          changePercent,
-          high: meta.regularMarketDayHigh ?? price,
-          low: meta.regularMarketDayLow ?? price,
-          volume: formatVolume(meta.regularMarketVolume ?? 0),
-          week52High: meta.fiftyTwoWeekHigh ?? null,
-          week52Low: meta.fiftyTwoWeekLow ?? null,
-        };
-      })
-    );
+    if (isCacheValid) {
+      quotes = cachedQuotes!;
+      cacheStatus = 'HIT';
+    } else {
+      quotes = await fetchAllQuotes();
+      if (quotes.length > 0) {
+        cachedQuotes = quotes;
+        cacheTimestamp = now;
+      } else if (cachedQuotes !== null) {
+        // Yahoo 실패 시 만료된 캐시라도 반환
+        quotes = cachedQuotes;
+      }
+      cacheStatus = 'MISS';
+    }
 
-    const quotes = results
-      .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled' && r.value !== null)
-      .map(r => r.value);
+    const remainingSec = Math.max(0, Math.round((CACHE_TTL_MS - (Date.now() - cacheTimestamp)) / 1000));
 
-    return new Response(JSON.stringify({ quotes, source: 'yahoo-v8' }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ quotes, source: 'yahoo-v8', cache: cacheStatus }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'Cache-Control': `public, max-age=${remainingSec}, stale-while-revalidate=10`,
+        'X-Cache': cacheStatus,
+      },
     });
   } catch (error) {
     console.error('Error fetching quotes:', error);

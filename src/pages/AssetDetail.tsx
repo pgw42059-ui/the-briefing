@@ -1,7 +1,8 @@
 import { useMemo, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Target, ShieldAlert, Sun, Moon, RefreshCw } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, Target, ShieldAlert, Sun, Moon, RefreshCw, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SvgAreaChart } from '@/components/SvgAreaChart';
@@ -53,6 +54,21 @@ const AssetDetail = () => {
   }, [dailyData, quote]);
 
   const keyLevels = dynamicLevels || detail?.keyLevels;
+
+  const handleShare = useCallback(async () => {
+    const shareUrl = `https://lab.merini.com/asset/${symbol}`;
+    const shareText = `${detail?.nameKr ?? ''} (${upperSymbol}) 실시간 시세 — 랩메린이`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareText, url: shareUrl });
+      } catch {
+        // 사용자 취소 시 무시
+      }
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast('링크가 복사됐습니다', { description: shareUrl, duration: 3000 });
+    }
+  }, [symbol, upperSymbol, detail]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -195,6 +211,15 @@ const AssetDetail = () => {
                 {isUp ? '+' : ''}{quote.change.toFixed(2)} ({isUp ? '+' : ''}{quote.changePercent.toFixed(2)}%)
               </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShare}
+              className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl"
+              aria-label="페이지 공유"
+            >
+              <Share2 className="w-4 h-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
