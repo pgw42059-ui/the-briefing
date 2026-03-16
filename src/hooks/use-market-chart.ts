@@ -56,6 +56,7 @@ export function useMarketChart(symbol: string, range = '1mo', interval = '1d') {
     queryKey: ['market-chart', symbol, range, interval],
     queryFn: () => fetchChartData(symbol, range, interval),
     staleTime: 60_000,
+    gcTime: 10 * 60_000,
     retry: 2,
   });
 }

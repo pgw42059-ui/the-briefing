@@ -10,12 +10,33 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { mockAssetDetails } from '@/lib/mock-data';
 import { useMarketQuotes } from '@/hooks/use-market-quotes';
 import { useMarketChart } from '@/hooks/use-market-chart';
+import { useEconomicEvents } from '@/hooks/use-economic-events';
 import { computeSignal } from '@/lib/compute-signals';
 import { computeTechnicals } from '@/lib/compute-technicals';
 import { computeKeyLevels } from '@/lib/compute-levels';
 import { TechnicalIndicators } from '@/components/TechnicalIndicators';
 import { useTheme } from '@/hooks/use-theme';
 import { useQueryClient } from '@tanstack/react-query';
+
+// 자산별 관련 경제지표 키워드 매핑
+const ASSET_KEYWORDS: Record<string, string[]> = {
+  NQ:      ['CPI', 'FOMC', 'ADP', '비농업', 'NFP', 'ISM', 'GDP', '소매판매', 'PPI', '연준', '금리'],
+  ES:      ['CPI', 'FOMC', '비농업', 'NFP', 'ISM', 'GDP', '소매판매', 'PPI', '연준', '금리'],
+  YM:      ['ISM', 'GDP', 'PMI', '소매판매', '제조업', '내구재', '산업생산'],
+  HSI:     ['중국', 'China', 'PMI', '위안', '무역수지', 'NBS', '소매판매', '산업생산'],
+  NIY:     ['BOJ', '일본', 'Japan', '엔화', 'GDP', '물가', 'CPI'],
+  STOXX50E:['ECB', '유로', 'EUR', 'ZEW', 'PMI', 'GDP', '인플레'],
+  GC:      ['CPI', 'FOMC', 'PPI', '인플레', '비농업', 'NFP', '달러', '금리', '연준'],
+  SI:      ['CPI', 'FOMC', 'PPI', '인플레', '산업생산', '제조업'],
+  CL:      ['EIA', '원유', '재고', 'OPEC', '생산량', '석유'],
+  NG:      ['EIA', '천연가스', '재고', '기상', '날씨', '가스'],
+  HG:      ['중국', 'PMI', '산업생산', '건설', '제조업', 'GDP'],
+  EURUSD:  ['ECB', 'FOMC', 'CPI', '비농업', 'NFP', '유로', '달러', '금리'],
+  USDJPY:  ['BOJ', 'FOMC', 'CPI', '비농업', 'NFP', '엔화', '달러', '금리'],
+  GBPUSD:  ['BOE', 'MPC', 'CPI', 'GDP', '영국', '달러'],
+  AUDUSD:  ['RBA', '호주', '중국', 'PMI', 'CPI'],
+  USDCAD:  ['BOC', '캐나다', 'CPI', '원유', 'EIA', '달러'],
+};
 
 const RANGE_OPTIONS = [
   { label: '1일', range: '1d', interval: '5m' },
@@ -37,6 +58,7 @@ const AssetDetail = () => {
   const { data: quotes, isLoading } = useMarketQuotes();
   const { data: chartData, isLoading: chartLoading } = useMarketChart(upperSymbol, selectedRange.range, selectedRange.interval);
   const { data: dailyData } = useMarketChart(upperSymbol, '1y', '1d');
+  const { data: allEvents } = useEconomicEvents();
   const quote = quotes?.find((q) => q.symbol === upperSymbol);
   const { theme, toggle: toggleTheme } = useTheme();
 
@@ -54,6 +76,34 @@ const AssetDetail = () => {
   }, [dailyData, quote]);
 
   const keyLevels = dynamicLevels || detail?.keyLevels;
+
+  // 실제 경제 이벤트 필터링 (오늘~3일 이내)
+  const relatedEvents = useMemo(() => {
+    const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
+    if (allEvents?.length && keywords.length) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + 3);
+      const endStr = endDate.toISOString().slice(0, 10);
+      const real = allEvents
+        .filter(e =>
+          e.date >= todayStr &&
+          e.date <= endStr &&
+          e.category !== 'earnings' &&
+          keywords.some(kw => e.name.includes(kw))
+        )
+        .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
+        .slice(0, 4)
+        .map(e => ({
+          label: e.time && e.time !== 'TBD' ? `${e.name} (${e.time})` : e.name,
+          isReal: true,
+          importance: e.importance,
+        }));
+      if (real.length > 0) return real;
+    }
+    // 실제 데이터 없으면 mock fallback
+    return (detail?.relatedEvents ?? []).map(ev => ({ label: ev, isReal: false, importance: 'medium' as const }));
+  }, [allEvents, upperSymbol, detail]);
 
   const handleShare = useCallback(async () => {
     const shareUrl = `https://lab.merini.com/asset/${symbol}`;
@@ -138,8 +188,13 @@ const AssetDetail = () => {
           <meta property="og:description" content={pageDesc} />
           <meta property="og:url" content={pageUrl!} />
           <meta property="og:type" content="website" />
+          <meta property="og:image" content="https://lab.merini.com/og-image.png" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={pageTitle} />
           <meta name="twitter:description" content={pageDesc} />
+          <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
           {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
         </Helmet>
         <div className="min-h-screen bg-background">
@@ -179,9 +234,13 @@ const AssetDetail = () => {
         <meta property="og:description" content={pageDesc} />
         <meta property="og:url" content={pageUrl!} />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://lab.merini.com/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDesc} />
+        <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
         {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
       </Helmet>
       {/* Header */}
@@ -441,10 +500,13 @@ const AssetDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {detail.relatedEvents.map((ev, i) => (
+                {relatedEvents.map((ev, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-sm p-2 rounded-lg bg-warning/5">
                     <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
-                    <span>{ev}</span>
+                    <span className="flex-1">{ev.label}</span>
+                    {ev.isReal && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0">실시간</span>
+                    )}
                   </div>
                 ))}
               </CardContent>

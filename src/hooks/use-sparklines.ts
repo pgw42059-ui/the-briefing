@@ -33,6 +33,7 @@ export function useSparklines(symbols: string[]) {
     queryKey: ['sparklines', ...symbols],
     queryFn: () => fetchAllSparklines(symbols),
     staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
     retry: 1,
     enabled: symbols.length > 0,
   });

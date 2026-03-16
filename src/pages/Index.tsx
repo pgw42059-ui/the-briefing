@@ -101,6 +101,13 @@ const Index = () => {
         <meta property="og:description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 강세/약세 시그널을 한눈에 확인하세요." />
         <meta property="og:url" content="https://lab.merini.com/" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://lab.merini.com/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="랩메린이 — 해외선물 경제지표 대시보드" />
+        <meta name="twitter:description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 강세/약세 시그널을 한눈에 확인하세요." />
+        <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
       </Helmet>
       {/* Skip to main content */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg">
