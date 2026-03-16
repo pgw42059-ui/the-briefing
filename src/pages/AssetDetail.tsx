@@ -11,6 +11,7 @@ import { mockAssetDetails } from '@/lib/mock-data';
 import { useMarketQuotes } from '@/hooks/use-market-quotes';
 import { useMarketChart } from '@/hooks/use-market-chart';
 import { useEconomicEvents } from '@/hooks/use-economic-events';
+import { useMarketAnalysis } from '@/hooks/use-market-analysis';
 import { computeSignal } from '@/lib/compute-signals';
 import { computeTechnicals } from '@/lib/compute-technicals';
 import { computeKeyLevels } from '@/lib/compute-levels';
@@ -104,6 +105,37 @@ const AssetDetail = () => {
     // 실제 데이터 없으면 mock fallback
     return (detail?.relatedEvents ?? []).map(ev => ({ label: ev, isReal: false, importance: 'medium' as const }));
   }, [allEvents, upperSymbol, detail]);
+
+  // AI 분석용 데이터 준비
+  const quoteForAI = useMemo(() => quote ? [{
+    symbol: quote.symbol,
+    name: detail.name,
+    nameKr: detail.nameKr,
+    price: quote.price,
+    change: quote.change,
+    changePercent: quote.changePercent,
+    high: quote.high,
+    low: quote.low,
+  }] : undefined, [quote, detail]);
+
+  const eventsForAI = useMemo(() => {
+    const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
+    if (!allEvents?.length || !keywords.length) return [];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return allEvents
+      .filter(e => e.date === todayStr && e.category !== 'earnings' && keywords.some(kw => e.name.includes(kw)))
+      .map(e => ({
+        time: e.time,
+        country: e.country ?? '',
+        name: e.name,
+        importance: e.importance,
+        forecast: e.forecast,
+        previous: e.previous,
+      }));
+  }, [allEvents, upperSymbol]);
+
+  const { data: analysisData, isLoading: analysisLoading, isError: analysisError, forceRefetch } =
+    useMarketAnalysis(quoteForAI, eventsForAI);
 
   const handleShare = useCallback(async () => {
     const shareUrl = `https://lab.merini.com/asset/${symbol}`;
@@ -558,6 +590,60 @@ const AssetDetail = () => {
         {/* Technical Indicators */}
         {technicals.length > 0 && <TechnicalIndicators indicators={technicals} />}
 
+        {/* AI 시장 브리핑 */}
+        <Card className="rounded-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg font-bold flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                🤖 AI 시장 브리핑
+                {!analysisLoading && !analysisError && analysisData && analysisData.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground font-normal bg-muted px-1.5 py-0.5 rounded">Gemini</span>
+                )}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={forceRefetch}
+                disabled={analysisLoading}
+                className="h-7 w-7 rounded-lg"
+                aria-label="AI 분석 새로고침"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${analysisLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {analysisLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-12 w-full rounded-lg" />
+                <Skeleton className="h-12 w-4/5 rounded-lg" />
+              </div>
+            ) : analysisError ? (
+              <p className="text-xs text-muted-foreground italic text-center py-4">AI 분석을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>
+            ) : !analysisData?.length ? (
+              <p className="text-xs text-muted-foreground italic text-center py-4">분석 데이터를 준비 중입니다.</p>
+            ) : (
+              <div className="space-y-2">
+                {analysisData.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-2.5 p-3 rounded-lg text-sm ${
+                      item.type === 'alert'
+                        ? 'bg-down-muted border border-down/20'
+                        : 'bg-primary/5 border border-primary/20'
+                    }`}
+                  >
+                    <span className="shrink-0 text-base leading-relaxed">
+                      {item.type === 'alert' ? '⚠️' : 'ℹ️'}
+                    </span>
+                    <p className="leading-relaxed">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
       </main>
     </div>
