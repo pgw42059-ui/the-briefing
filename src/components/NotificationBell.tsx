@@ -242,9 +242,9 @@ export const NotificationBell = memo(function NotificationBell({
                   <p className="text-xs font-medium">브라우저 알림</p>
                   <p className="text-[10px] text-muted-foreground">
                     {'Notification' in window
-                      ? Notification.permission === 'denied'
+                      ? (Notification.permission === 'denied'
                         ? '브라우저에서 차단됨 (설정에서 허용 필요)'
-                        : '탭이 백그라운드일 때 팝업 알림'}
+                        : '탭이 백그라운드일 때 팝업 알림')
                       : '이 브라우저는 지원하지 않음'}
                   </p>
                 </div>
