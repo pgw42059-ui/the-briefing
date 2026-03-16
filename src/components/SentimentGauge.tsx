@@ -1,41 +1,14 @@
 import { memo } from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { MarketSignal } from '@/lib/mock-data';
+import { SENTIMENT_CONFIG } from '@/lib/sentiment-config';
 
 interface SentimentGaugeProps {
   signal: MarketSignal;
 }
 
-const sentimentConfig = {
-  bullish: {
-    label: '강세',
-    emoji: '🔴',
-    colorClass: 'text-up',
-    bgClass: 'bg-up-muted',
-    borderClass: 'border-up/30',
-    Icon: TrendingUp,
-  },
-  bearish: {
-    label: '약세',
-    emoji: '🔵',
-    colorClass: 'text-down',
-    bgClass: 'bg-down-muted',
-    borderClass: 'border-down/30',
-    Icon: TrendingDown,
-  },
-  neutral: {
-    label: '중립',
-    emoji: '⚪',
-    colorClass: 'text-muted-foreground',
-    bgClass: 'bg-muted',
-    borderClass: 'border-border',
-    Icon: Minus,
-  },
-};
-
 export const SentimentGauge = memo(function SentimentGauge({ signal }: SentimentGaugeProps) {
-  const cfg = sentimentConfig[signal.sentiment];
+  const cfg = SENTIMENT_CONFIG[signal.sentiment];
   const gaugePercent = ((signal.score + 100) / 200) * 100;
 
   return (

@@ -1,16 +1,10 @@
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { TechnicalResult } from '@/lib/compute-technicals';
+import { SENTIMENT_CONFIG } from '@/lib/sentiment-config';
 
 interface TechnicalIndicatorsProps {
   indicators: TechnicalResult[];
 }
-
-const signalConfig = {
-  bullish: { label: '강세', emoji: '🔴', colorClass: 'text-up', bgClass: 'bg-up-muted', Icon: TrendingUp, dotClass: 'bg-up' },
-  bearish: { label: '약세', emoji: '🔵', colorClass: 'text-down', bgClass: 'bg-down-muted', Icon: TrendingDown, dotClass: 'bg-down' },
-  neutral: { label: '중립', emoji: '⚪', colorClass: 'text-muted-foreground', bgClass: 'bg-muted', Icon: Minus, dotClass: 'bg-muted-foreground' },
-};
 
 export function TechnicalIndicators({ indicators }: TechnicalIndicatorsProps) {
   if (indicators.length === 0) return null;
@@ -18,7 +12,7 @@ export function TechnicalIndicators({ indicators }: TechnicalIndicatorsProps) {
   const bullCount = indicators.filter(i => i.signal === 'bullish').length;
   const bearCount = indicators.filter(i => i.signal === 'bearish').length;
   const overallSignal = bullCount > bearCount ? 'bullish' : bearCount > bullCount ? 'bearish' : 'neutral';
-  const overall = signalConfig[overallSignal];
+  const overall = SENTIMENT_CONFIG[overallSignal];
 
   return (
     <Card className="rounded-xl">
@@ -34,7 +28,7 @@ export function TechnicalIndicators({ indicators }: TechnicalIndicatorsProps) {
       <CardContent>
         <div className="space-y-1" role="list" aria-label="보조지표 목록">
           {indicators.map((ind) => {
-            const cfg = signalConfig[ind.signal];
+            const cfg = SENTIMENT_CONFIG[ind.signal];
             return (
               <div key={ind.name} className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0" role="listitem">
                 <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${cfg.dotClass}`} aria-hidden="true" />
