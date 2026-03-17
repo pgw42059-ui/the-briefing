@@ -84,11 +84,13 @@ export function useNotifications(
   const [prefs, setPrefs] = useState<NotificationPrefs>(loadPrefs);
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(loadPriceAlerts);
   const priceAlertsRef = useRef<PriceAlert[]>([]);
+  const prefsRef = useRef<NotificationPrefs>(DEFAULT_PREFS);
   const prevQuotesRef = useRef<Map<string, number>>(new Map());
   const checkedEventsRef = useRef<Set<string>>(new Set());
 
-  // priceAlerts ref 동기화 — 체크 effect에서 dep 없이 최신값 읽기 위해
+  // ref 동기화 — 콜백에서 dep 없이 최신값 읽기 위해
   useEffect(() => { priceAlertsRef.current = priceAlerts; }, [priceAlerts]);
+  useEffect(() => { prefsRef.current = prefs; }, [prefs]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -120,22 +122,19 @@ export function useNotifications(
     toast(`${emoji} ${notif.title}`, { description: notif.message, duration: 5000 });
 
     // 브라우저 네이티브 알림 — 탭이 백그라운드일 때 팝업 표시
-    setPrefs(currentPrefs => {
-      if (
-        currentPrefs.browserPushEnabled &&
-        'Notification' in window &&
-        Notification.permission === 'granted' &&
-        document.visibilityState === 'hidden'
-      ) {
-        new Notification(`${emoji} ${notif.title}`, {
-          body: notif.message,
-          icon: '/icons/pwa-192x192.png',
-          tag: notif.symbol ?? notif.type,
-          renotify: true,
-        });
-      }
-      return currentPrefs;
-    });
+    if (
+      prefsRef.current.browserPushEnabled &&
+      'Notification' in window &&
+      Notification.permission === 'granted' &&
+      document.visibilityState === 'hidden'
+    ) {
+      new Notification(`${emoji} ${notif.title}`, {
+        body: notif.message,
+        icon: '/icons/pwa-192x192.png',
+        tag: notif.symbol ?? notif.type,
+        renotify: true,
+      });
+    }
   }, []);
 
   // Price movement alerts (% 변동)
@@ -185,7 +184,7 @@ export function useNotifications(
     const activeAlerts = priceAlertsRef.current.filter(a => !a.triggered);
     if (activeAlerts.length === 0) return;
 
-    const triggeredIds: string[] = [];
+    const triggeredIds = new Set<string>();
 
     activeAlerts.forEach(alert => {
       const q = quotes.find(q => q.symbol === alert.symbol);
@@ -197,7 +196,7 @@ export function useNotifications(
           : q.price <= alert.targetPrice;
 
       if (hit) {
-        triggeredIds.push(alert.id);
+        triggeredIds.add(alert.id);
         const dirLabel = alert.direction === 'above' ? '이상' : '이하';
         addNotification({
           type: 'price',
@@ -208,10 +207,9 @@ export function useNotifications(
       }
     });
 
-    if (triggeredIds.length > 0) {
-      const triggeredSet = new Set(triggeredIds);
+    if (triggeredIds.size > 0) {
       setPriceAlerts(prev =>
-        prev.map(a => triggeredSet.has(a.id) ? { ...a, triggered: true } : a)
+        prev.map(a => triggeredIds.has(a.id) ? { ...a, triggered: true } : a)
       );
     }
   }, [quotes, addNotification]);

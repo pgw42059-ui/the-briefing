@@ -75,10 +75,6 @@ const AssetDetail = () => {
     loadPriceAlerts().filter(a => a.symbol === upperSymbol)
   );
 
-  const refreshSymbolAlerts = useCallback(() => {
-    setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol));
-  }, [upperSymbol]);
-
   const handleAddAlert = useCallback(() => {
     const price = parseFloat(targetInput.replace(/,/g, ''));
     if (isNaN(price) || price <= 0) {
@@ -94,18 +90,18 @@ const AssetDetail = () => {
       createdAt: Date.now(),
       triggered: false,
     };
-    const all = loadPriceAlerts();
-    all.unshift(newAlert);
+    const all = [newAlert, ...loadPriceAlerts()];
     savePriceAlerts(all);
+    setSymbolAlerts(all.filter(a => a.symbol === upperSymbol));
     setTargetInput('');
-    setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol));
     const dirLabel = alertDirection === 'above' ? '이상' : '이하';
     toast.success(`가격 알림 등록 완료`, { description: `${upperSymbol} ${price.toLocaleString()} ${dirLabel} 도달 시 알림` });
   }, [targetInput, alertDirection, upperSymbol, detail]);
 
   const handleDeleteAlert = useCallback((id: string) => {
-    savePriceAlerts(loadPriceAlerts().filter(a => a.id !== id));
-    setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol));
+    const filtered = loadPriceAlerts().filter(a => a.id !== id);
+    savePriceAlerts(filtered);
+    setSymbolAlerts(filtered.filter(a => a.symbol === upperSymbol));
   }, [upperSymbol]);
 
   const technicals = useMemo(() => {
@@ -122,11 +118,12 @@ const AssetDetail = () => {
 
   const keyLevels = dynamicLevels || detail?.keyLevels;
 
+  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
   // 실제 경제 이벤트 필터링 (오늘~3일 이내)
   const relatedEvents = useMemo(() => {
     const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
     if (allEvents?.length && keywords.length) {
-      const todayStr = new Date().toISOString().slice(0, 10);
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + 3);
       const endStr = endDate.toISOString().slice(0, 10);
@@ -165,7 +162,6 @@ const AssetDetail = () => {
   const eventsForAI = useMemo(() => {
     const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
     if (!allEvents?.length || !keywords.length) return [];
-    const todayStr = new Date().toISOString().slice(0, 10);
     return allEvents
       .filter(e => e.date === todayStr && e.category !== 'earnings' && keywords.some(kw => e.name.includes(kw)))
       .map(e => ({
@@ -253,26 +249,30 @@ const AssetDetail = () => {
     );
   }
 
+  const helmet = (
+    <Helmet>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDesc} />
+      <link rel="canonical" href={pageUrl!} />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDesc} />
+      <meta property="og:url" content={pageUrl!} />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="https://lab.merini.com/og-image.png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={pageTitle} />
+      <meta name="twitter:description" content={pageDesc} />
+      <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
+      {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
+    </Helmet>
+  );
+
   if (isLoading || !quote) {
     return (
       <>
-        <Helmet>
-          <title>{pageTitle}</title>
-          <meta name="description" content={pageDesc} />
-          <link rel="canonical" href={pageUrl!} />
-          <meta property="og:title" content={pageTitle} />
-          <meta property="og:description" content={pageDesc} />
-          <meta property="og:url" content={pageUrl!} />
-          <meta property="og:type" content="website" />
-          <meta property="og:image" content="https://lab.merini.com/og-image.png" />
-          <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="630" />
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={pageTitle} />
-          <meta name="twitter:description" content={pageDesc} />
-          <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
-          {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
-        </Helmet>
+        {helmet}
         <div className="min-h-screen bg-background">
           <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
             <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -303,23 +303,7 @@ const AssetDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDesc} />
-        <link rel="canonical" href={pageUrl!} />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDesc} />
-        <meta property="og:url" content={pageUrl!} />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://lab.merini.com/og-image.png" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDesc} />
-        <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
-        {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
-      </Helmet>
+      {helmet}
       {/* Header */}
       <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
@@ -348,7 +332,7 @@ const AssetDetail = () => {
               </div>
             </div>
             {/* 가격 알림 설정 Popover */}
-            <Popover open={alertOpen} onOpenChange={(o) => { setAlertOpen(o); if (o) refreshSymbolAlerts(); }}>
+            <Popover open={alertOpen} onOpenChange={(o) => { setAlertOpen(o); if (o) setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol)); }}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
