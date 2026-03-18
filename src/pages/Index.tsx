@@ -67,11 +67,14 @@ const Index = () => {
   const { user, displayName, signOut } = useAuth();
   const { symbols: watchlistSymbols, isWatched, toggle: toggleWatchlist } = useWatchlist();
 
-  const { indexQuotes, commodityQuotes, fxQuotes } = useMemo(() => ({
-    indexQuotes: quotes?.filter(q => INDEX_SYMBOLS.includes(q.symbol)) ?? [],
-    commodityQuotes: quotes?.filter(q => COMMODITY_SYMBOLS.includes(q.symbol)) ?? [],
-    fxQuotes: quotes?.filter(q => FX_SYMBOLS.includes(q.symbol)) ?? [],
-  }), [quotes]);
+  const { indexQuotes, commodityQuotes, fxQuotes } = useMemo(() => {
+    const bySymbol = new Map(quotes?.map(q => [q.symbol, q]));
+    return {
+      indexQuotes: INDEX_SYMBOLS.flatMap(s => bySymbol.has(s) ? [bySymbol.get(s)!] : []),
+      commodityQuotes: COMMODITY_SYMBOLS.flatMap(s => bySymbol.has(s) ? [bySymbol.get(s)!] : []),
+      fxQuotes: FX_SYMBOLS.flatMap(s => bySymbol.has(s) ? [bySymbol.get(s)!] : []),
+    };
+  }, [quotes]);
   const watchlistQuotes = useMemo(() => quotes?.filter(q => watchlistSymbols.includes(q.symbol)) ?? [], [quotes, watchlistSymbols]);
   const { indexSignals, commoditySignals, fxSignals } = useMemo(() => ({
     indexSignals: signals.filter(s => INDEX_SYMBOLS.includes(s.symbol)),
