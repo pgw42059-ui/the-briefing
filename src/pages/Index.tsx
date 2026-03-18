@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, lazy, Suspense, startTransition, useEffect } from 'react';
+import { useMemo, useState, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator, AlertCircle, RefreshCw } from 'lucide-react';
@@ -52,15 +52,8 @@ const Index = () => {
   const { data: quotes, isLoading, isError, isPlaceholderData, refetch } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
   const { data: fearGreed } = useFearGreed();
-  const [signals, setSignals] = useState<ReturnType<typeof computeAllSignals>>([]);
-  const [composite, setComposite] = useState<ReturnType<typeof computeCompositeScore> | null>(null);
-  useEffect(() => {
-    if (!quotes) { setSignals([]); setComposite(null); return; }
-    startTransition(() => {
-      setSignals(computeAllSignals(quotes));
-      setComposite(computeCompositeScore(quotes, fearGreed ?? null));
-    });
-  }, [quotes, fearGreed]);
+  const signals = useMemo(() => quotes ? computeAllSignals(quotes) : [], [quotes]);
+  const composite = useMemo(() => quotes ? computeCompositeScore(quotes, fearGreed ?? null) : null, [quotes, fearGreed]);
   const { theme, toggle } = useTheme();
   const { data: sparklines } = useSparklines(ALL_SYMBOLS);
   const [cacheTtlMinutes, setCacheTtlMinutes] = useState(60);

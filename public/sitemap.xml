@@ -43,6 +43,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://lab.merini.com/asset/vix</loc>
+    <lastmod>2026-03-18</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://lab.merini.com/asset/gc</loc>
     <lastmod>2026-03-16</lastmod>
     <changefreq>hourly</changefreq>
@@ -101,6 +107,18 @@
     <lastmod>2026-03-16</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lab.merini.com/asset/usdkrw</loc>
+    <lastmod>2026-03-18</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lab.merini.com/asset/dxy</loc>
+    <lastmod>2026-03-18</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://lab.merini.com/calculator</loc>
