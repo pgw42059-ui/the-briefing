@@ -33,6 +33,7 @@ const ASSETS = [
   { symbol: 'gbpusd',   nameKr: '파운드/달러',     nameEn: 'GBP/USD',                   category: 'FX 선물' },
   { symbol: 'audusd',   nameKr: '호주달러/달러',   nameEn: 'AUD/USD',                   category: 'FX 선물' },
   { symbol: 'usdcad',   nameKr: '달러/캐나다',     nameEn: 'USD/CAD',                   category: 'FX 선물' },
+  { symbol: 'usdkrw',   nameKr: '원달러환율',      nameEn: 'USD/KRW',                   category: 'FX' },
   { symbol: 'dxy',      nameKr: '달러인덱스',      nameEn: 'US Dollar Index',           category: 'FX' },
 ];
 

@@ -32,7 +32,7 @@ import { MarketCompositeBar } from '@/components/MarketCompositeBar';
 
 const INDEX_SYMBOLS = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E', 'VIX'];
 const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
-const FX_SYMBOLS = ['DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
+const FX_SYMBOLS = ['USDKRW', 'DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
 const ALL_SYMBOLS = [...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS, ...FX_SYMBOLS];
 
 function SignalGrid({ items }: { items: ReturnType<typeof computeAllSignals> }) {
@@ -324,12 +324,12 @@ const Index = () => {
                       <DollarSign className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                       <span className="text-xs font-bold text-foreground/80">FX</span>
                     </div>
-                    <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                    <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:7}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
                       <CompactQuoteList
                         quotes={fxQuotes}
                         sparklines={sparklines}
                         isLoading={isLoading}
-                        skeletonCount={6}
+                        skeletonCount={7}
                         showWatchlist={!!user}
                         isWatched={isWatched}
                         onToggleWatchlist={toggleWatchlist}

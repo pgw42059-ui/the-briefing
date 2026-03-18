@@ -41,6 +41,7 @@ const ASSET_KEYWORDS: Record<string, string[]> = {
   GBPUSD:  ['BOE', 'MPC', 'CPI', 'GDP', '영국', '달러'],
   AUDUSD:  ['RBA', '호주', '중국', 'PMI', 'CPI'],
   USDCAD:  ['BOC', '캐나다', 'CPI', '원유', 'EIA', '달러'],
+  USDKRW:  ['FOMC', 'CPI', '비농업', 'NFP', '연준', '달러', '금리', '한국', '무역수지'],
 };
 
 // 오늘 날짜 문자열 — 컴포넌트 마운트마다 재계산하지 않도록 모듈 레벨에 위치

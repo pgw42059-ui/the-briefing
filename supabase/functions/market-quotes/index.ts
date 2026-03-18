@@ -24,6 +24,7 @@ const SYMBOLS: Record<string, { yahoo: string; name: string; nameKr: string }> =
   GBPUSD: { yahoo: 'GBPUSD=X', name: 'GBP/USD', nameKr: '파운드/달러' },
   AUDUSD: { yahoo: 'AUDUSD=X', name: 'AUD/USD', nameKr: '호주달러/달러' },
   USDCAD: { yahoo: 'CAD=X', name: 'USD/CAD', nameKr: '달러/캐나다' },
+  USDKRW: { yahoo: 'KRW=X', name: 'USD/KRW', nameKr: '원달러환율' },
 };
 
 // ── 인메모리 캐시 (Deno isolate 워밍 시 Yahoo Finance 호출 절감) ──

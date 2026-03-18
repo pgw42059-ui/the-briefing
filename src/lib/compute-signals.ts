@@ -27,6 +27,7 @@ const ASSET_NAMES_KR: Record<string, string> = {
   NG: '천연가스',
   HG: '구리',
   DXY: '달러인덱스',
+  USDKRW: '원달러환율',
   EURUSD: '유로/달러',
   USDJPY: '달러/엔',
   GBPUSD: '파운드/달러',
@@ -147,7 +148,7 @@ export function computeAllSignals(quotes: FuturesQuote[]): MarketSignal[] {
 
 const INDEX_SYMBOLS    = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E', 'VIX'];
 const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
-const FX_SYMBOLS       = ['DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
+const FX_SYMBOLS       = ['USDKRW', 'DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
 
 function avgScore(signals: MarketSignal[], symbols: string[]): number {
   const filtered = signals.filter(s => symbols.includes(s.symbol));
