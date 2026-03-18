@@ -1,30 +1,17 @@
 import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import type { FuturesQuote, EconomicEvent } from '@/lib/mock-data';
 
 export interface MarketAnalysisItem {
   type: 'alert' | 'info';
   text: string;
 }
 
-interface QuoteInput {
-  symbol: string;
-  name: string;
-  nameKr: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  high: number;
-  low: number;
-}
+// FuturesQuote에서 API 전송에 불필요한 필드만 제외
+type QuoteInput = Pick<FuturesQuote, 'symbol' | 'name' | 'nameKr' | 'price' | 'change' | 'changePercent' | 'high' | 'low'>;
 
-interface EventInput {
-  time: string;
-  country: string;
-  name: string;
-  importance: string;
-  forecast?: string;
-  previous?: string;
-}
+// EconomicEvent에서 AI 분석에 필요한 필드만 선택
+type EventInput = Pick<EconomicEvent, 'time' | 'country' | 'name' | 'importance' | 'forecast' | 'previous'>;
 
 async function fetchMarketAnalysis(
   quotes: QuoteInput[],

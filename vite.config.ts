@@ -37,37 +37,8 @@ export default defineConfig(({ mode }) => ({
           },
         ],
       },
-      manifest: {
-        name: "랩메린이 — 해외선물 대시보드",
-        short_name: "랩메린이",
-        description: "나스닥, S&P500, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에",
-        theme_color: "#080a0c",
-        background_color: "#080a0c",
-        display: "standalone",
-        orientation: "portrait",
-        start_url: "/",
-        scope: "/",
-        lang: "ko",
-        categories: ["finance", "business"],
-        icons: [
-          {
-            src: "/pwa-192x192.png",
-            sizes: "192x192",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-          },
-          {
-            src: "/pwa-512x512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable",
-          },
-        ],
-      },
+      // manifest는 public/manifest.json을 단일 진실의 원천으로 사용
+      // index.html에서 <link rel="manifest" href="/manifest.json" /> 직접 참조
     }),
   ].filter(Boolean),
   resolve: {
