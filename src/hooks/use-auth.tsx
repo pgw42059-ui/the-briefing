@@ -37,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .select('display_name')
             .eq('user_id', session.user.id)
             .single()
-            .then(({ data }) => {
+            .then(({ data, error }) => {
+              if (error) return;
               setDisplayName(data?.display_name ?? null);
             });
         }, 0);

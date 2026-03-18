@@ -47,6 +47,21 @@
       "name": "골드 (GC)",
       "url": "/asset/gc",
       "description": "금 선물 시세"
+    },
+    {
+      "name": "원달러환율 (USDKRW)",
+      "url": "/asset/usdkrw",
+      "description": "원달러 환율 실시간 시세"
+    },
+    {
+      "name": "VIX 공포지수",
+      "url": "/asset/vix",
+      "description": "CBOE 변동성 지수"
+    },
+    {
+      "name": "달러인덱스 (DXY)",
+      "url": "/asset/dxy",
+      "description": "미국 달러 인덱스"
     }
   ]
 }
