@@ -29,6 +29,8 @@ export interface EconomicEvent {
   epsEstimate?: string;
   epsActual?: string;
   epsSurprisePct?: number;
+  revenueEstimate?: number;  // raw USD (e.g. 20237347588)
+  revenueActual?: number;
   timing?: 'BMO' | 'AMC' | 'TNS'; // Before Market Open / After Market Close / Time Not Supplied
 }
 

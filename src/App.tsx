@@ -16,6 +16,8 @@ const Index = lazy(() => import("./pages/Index"));
 const AssetDetail = lazy(() => import("./pages/AssetDetail"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const InstallPage = lazy(() => import("./pages/InstallPage"));
+const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -59,6 +61,8 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/install" element={<InstallPage />} />
+                  <Route path="/calculator" element={<CalculatorPage />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
                   <Route path="/asset/:symbol" element={<AssetDetail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

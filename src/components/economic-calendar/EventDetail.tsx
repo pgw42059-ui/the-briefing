@@ -3,11 +3,19 @@ import { Clock, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EconomicEvent } from '@/lib/mock-data';
 import { getEventDescription } from '@/lib/event-descriptions';
+import { getTickerMeta, getTickerUrl } from '@/lib/ticker-meta';
 
-function SurpriseIndicator({ actual, forecast }: { actual?: string; forecast?: string }) {
-  if (!actual || !forecast) return null;
-  const a = parseFloat(actual);
-  const f = parseFloat(forecast);
+function fmtRevenue(v: number): string {
+  if (v >= 1e12) return `$${(v / 1e12).toFixed(2)}T`;
+  if (v >= 1e9)  return `$${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6)  return `$${(v / 1e6).toFixed(1)}M`;
+  return `$${v.toLocaleString()}`;
+}
+
+function SurpriseIndicator({ actual, forecast }: { actual?: number | string; forecast?: number | string }) {
+  if (actual == null || forecast == null) return null;
+  const a = typeof actual === 'string' ? parseFloat(actual) : actual;
+  const f = typeof forecast === 'string' ? parseFloat(forecast) : forecast;
   if (isNaN(a) || isNaN(f)) return null;
   const diff = a - f;
   if (Math.abs(diff) < 0.001) return <Minus className="w-3.5 h-3.5 text-muted-foreground" />;
@@ -54,15 +62,34 @@ function EarningsDetail({ event }: { event: EconomicEvent }) {
   const hasEpsEst = event.epsEstimate != null;
   const hasEpsAct = event.epsActual != null;
   const hasSurprise = event.epsSurprisePct != null;
+  const hasRevEst = event.revenueEstimate != null;
+  const hasRevAct = event.revenueActual != null;
+  const tickerMeta = event.ticker ? getTickerMeta(event.ticker) : null;
 
   return (
     <>
       {/* Company info */}
       {event.companyName && (
-        <p className="text-xs text-muted-foreground">
-          {event.companyName}
-          {event.ticker && <span className="ml-2 font-mono text-foreground/60">{event.ticker}</span>}
-        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground">{event.companyName}</span>
+          {event.ticker && (
+            <>
+              {tickerMeta && (
+                <span className={cn('text-[9px] px-1.5 py-0.5 rounded-md border font-medium', tickerMeta.colorClass)}>
+                  {tickerMeta.sector}
+                </span>
+              )}
+              <a
+                href={getTickerUrl(event.ticker)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs text-primary hover:underline"
+              >
+                {event.ticker} ↗
+              </a>
+            </>
+          )}
+        </div>
       )}
 
       {/* EPS grid */}
@@ -109,6 +136,42 @@ function EarningsDetail({ event }: { event: EconomicEvent }) {
         </div>
       ) : (
         <p className="text-xs text-muted-foreground italic">EPS 데이터 없음 (발표 예정)</p>
+      )}
+
+      {/* Revenue */}
+      {(hasRevEst || hasRevAct) && (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="text-center p-2.5 rounded-lg bg-background/60 border border-border/20">
+            <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">매출 예상</p>
+            <p className="text-sm font-semibold tabular-nums">
+              {hasRevEst ? fmtRevenue(event.revenueEstimate!) : '—'}
+            </p>
+          </div>
+          <div className={cn(
+            'text-center p-2.5 rounded-lg bg-background/60 border border-border/20',
+            hasRevAct && 'ring-1 ring-primary/30 border-primary/10'
+          )}>
+            <p className="text-[10px] text-muted-foreground mb-1 flex items-center justify-center gap-1 uppercase tracking-wider">
+              매출 실적
+              {hasRevAct && hasRevEst && (
+                <SurpriseIndicator
+                  actual={event.revenueActual}
+                  forecast={event.revenueEstimate}
+                />
+              )}
+            </p>
+            <p className={cn(
+              'text-sm font-bold tabular-nums',
+              hasRevAct && hasRevEst
+                ? event.revenueActual! > event.revenueEstimate! ? 'text-up'
+                : event.revenueActual! < event.revenueEstimate! ? 'text-down'
+                : 'text-foreground'
+                : 'text-foreground'
+            )}>
+              {hasRevAct ? fmtRevenue(event.revenueActual!) : '—'}
+            </p>
+          </div>
+        </div>
       )}
     </>
   );

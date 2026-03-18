@@ -37,6 +37,20 @@ const ASSETS = [
 // 추가 정적 라우트 (메타데이터 주입 없이 단순 복사)
 const EXTRA_ROUTES = ['auth', 'install'];
 
+// 페이지별 메타데이터
+const PAGE_METAS = {
+  calculator: {
+    title: '선물 트레이더 계산기 — 틱 손익·포지션 사이징·환율 변환 · 랩메린이',
+    description: '선물 트레이딩 필수 계산기. NQ·ES·GC 등 12개 종목 틱 손익 계산, 수수료 포함 순수익, 포지션 사이징(계좌 리스크 기반 권장 계약수), 실시간 환율 변환을 한 번에.',
+    url: 'https://lab.merini.com/calculator',
+  },
+  calendar: {
+    title: '경제지표 발표 일정 2025 — 미국 주요 지표 캘린더 · 랩메린이',
+    description: '2025년 미국 경제지표 발표 일정. CPI, FOMC, NFP, PCE, GDP 등 주요 거시경제 지표와 기업실적 발표 일정을 실시간으로 확인하세요. 선물 트레이더를 위한 영향 종목(NQ·ES·GC·CL) 안내 포함.',
+    url: 'https://lab.merini.com/calendar',
+  },
+};
+
 if (!existsSync(SRC)) {
   console.error('❌ dist/index.html not found. Run `npm run build` first.');
   process.exit(1);
@@ -45,64 +59,29 @@ if (!existsSync(SRC)) {
 const baseHtml = readFileSync(SRC, 'utf-8');
 let count = 0;
 
-function injectMeta(html, asset) {
-  const { symbol, nameKr, nameEn, category } = asset;
-  const url = `https://lab.merini.com/asset/${symbol}`;
-  const SYMBOL = symbol.toUpperCase();
-  const title = `${nameKr} (${SYMBOL}) 실시간 시세 · 랩메린이`;
-  const description = `${nameKr} (${SYMBOL}) 실시간 시세, 강세/약세 시그널, 기술적 분석을 한눈에 확인하세요. ${nameEn} — ${category} 전문 분석 대시보드.`;
-
+// 공통 메타 주입 함수 — asset 페이지와 독립 페이지 모두 사용
+function injectPageMeta(html, { title, description, url }) {
   return html
-    // title
-    .replace(
-      /<title>[^<]*<\/title>/,
-      `<title>${title}</title>`
-    )
-    // description
-    .replace(
-      /<meta name="description" content="[^"]*"/,
-      `<meta name="description" content="${description}"`
-    )
-    // canonical
-    .replace(
-      /<link rel="canonical" href="[^"]*"/,
-      `<link rel="canonical" href="${url}"`
-    )
-    // hreflang ko
-    .replace(
-      /<link rel="alternate" hreflang="ko" href="[^"]*"/,
-      `<link rel="alternate" hreflang="ko" href="${url}"`
-    )
-    // hreflang x-default
-    .replace(
-      /<link rel="alternate" hreflang="x-default" href="[^"]*"/,
-      `<link rel="alternate" hreflang="x-default" href="${url}"`
-    )
-    // OG title
-    .replace(
-      /<meta property="og:title" content="[^"]*"/,
-      `<meta property="og:title" content="${title}"`
-    )
-    // OG description
-    .replace(
-      /<meta property="og:description" content="[^"]*"/,
-      `<meta property="og:description" content="${description}"`
-    )
-    // OG url
-    .replace(
-      /<meta property="og:url" content="[^"]*"/,
-      `<meta property="og:url" content="${url}"`
-    )
-    // Twitter title
-    .replace(
-      /<meta name="twitter:title" content="[^"]*"/,
-      `<meta name="twitter:title" content="${title}"`
-    )
-    // Twitter description
-    .replace(
-      /<meta name="twitter:description" content="[^"]*"/,
-      `<meta name="twitter:description" content="${description}"`
-    );
+    .replace(/<title>[^<]*<\/title>/,                            `<title>${title}</title>`)
+    .replace(/<meta name="description" content="[^"]*"/,         `<meta name="description" content="${description}"`)
+    .replace(/<link rel="canonical" href="[^"]*"/,               `<link rel="canonical" href="${url}"`)
+    .replace(/<link rel="alternate" hreflang="ko" href="[^"]*"/, `<link rel="alternate" hreflang="ko" href="${url}"`)
+    .replace(/<link rel="alternate" hreflang="x-default" href="[^"]*"/, `<link rel="alternate" hreflang="x-default" href="${url}"`)
+    .replace(/<meta property="og:title" content="[^"]*"/,        `<meta property="og:title" content="${title}"`)
+    .replace(/<meta property="og:description" content="[^"]*"/,  `<meta property="og:description" content="${description}"`)
+    .replace(/<meta property="og:url" content="[^"]*"/,          `<meta property="og:url" content="${url}"`)
+    .replace(/<meta name="twitter:title" content="[^"]*"/,       `<meta name="twitter:title" content="${title}"`)
+    .replace(/<meta name="twitter:description" content="[^"]*"/, `<meta name="twitter:description" content="${description}"`);
+}
+
+function injectAssetMeta(html, asset) {
+  const { symbol, nameKr, nameEn, category } = asset;
+  const SYMBOL = symbol.toUpperCase();
+  return injectPageMeta(html, {
+    title:       `${nameKr} (${SYMBOL}) 실시간 시세 · 랩메린이`,
+    description: `${nameKr} (${SYMBOL}) 실시간 시세, 강세/약세 시그널, 기술적 분석을 한눈에 확인하세요. ${nameEn} — ${category} 전문 분석 대시보드.`,
+    url:         `https://lab.merini.com/asset/${symbol}`,
+  });
 }
 
 function writeRoute(relPath, html) {
@@ -117,12 +96,15 @@ function writeRoute(relPath, html) {
 console.log('\n📄 Generating static route files...\n');
 
 for (const asset of ASSETS) {
-  const html = injectMeta(baseHtml, asset);
-  writeRoute(`asset/${asset.symbol}`, html);
+  writeRoute(`asset/${asset.symbol}`, injectAssetMeta(baseHtml, asset));
 }
 
 for (const route of EXTRA_ROUTES) {
   writeRoute(route, baseHtml);
+}
+
+for (const [route, meta] of Object.entries(PAGE_METAS)) {
+  writeRoute(route, injectPageMeta(baseHtml, meta));
 }
 
 console.log(`\n✅ ${count} route files generated.\n`);

@@ -2,6 +2,8 @@ import { memo, useCallback } from 'react';
 import { Star, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EconomicEvent } from '@/lib/mock-data';
+import { getEventImpact } from '@/lib/event-impact';
+import { getTickerMeta } from '@/lib/ticker-meta';
 import { EventDetail } from './EventDetail';
 
 function ImportanceStars({ level }: { level: EconomicEvent['importance'] }) {
@@ -46,6 +48,9 @@ interface Props {
 export const TimelineEvent = memo(function TimelineEvent({ event, isExpanded, onToggle, index }: Props) {
   const handleClick = useCallback(() => onToggle(event.id), [event.id, onToggle]);
   const isEarnings = event.category === 'earnings';
+  // 거시경제 이벤트만 영향도 태그 표시 (캐싱됨)
+  const impacts = isEarnings ? [] : getEventImpact(event.name);
+  const tickerMeta = isEarnings && event.ticker ? getTickerMeta(event.ticker) : null;
 
   return (
     <div
@@ -88,6 +93,19 @@ export const TimelineEvent = memo(function TimelineEvent({ event, isExpanded, on
             <p className="text-sm font-semibold leading-tight truncate">{event.name}</p>
             <ImportanceStars level={event.importance} />
             {isEarnings && event.timing && <TimingBadge timing={event.timing} />}
+            {tickerMeta && (
+              <span className={cn('text-[9px] px-1.5 py-0.5 rounded-md border font-medium shrink-0', tickerMeta.colorClass)}>
+                {tickerMeta.sector}
+              </span>
+            )}
+            {impacts.map(sym => (
+              <span
+                key={sym}
+                className="text-[9px] font-mono px-1 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 shrink-0"
+              >
+                {sym}
+              </span>
+            ))}
           </div>
 
           {/* Earnings ticker / macro data preview */}

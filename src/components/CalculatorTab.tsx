@@ -92,14 +92,58 @@ function RateBadge({
 }
 
 // ──────────────────────────────────────────────
+// 종목 선택 버튼 그리드 (공통)
+// ──────────────────────────────────────────────
+function FutureSelector({
+  selectedIdx,
+  onSelect,
+  showCustom = false,
+}: {
+  selectedIdx: number | null;
+  onSelect: (i: number | null) => void;
+  showCustom?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {FUTURES.map((f, i) => (
+        <button
+          key={f.symbol}
+          onClick={() => onSelect(i)}
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+            i === selectedIdx
+              ? 'bg-primary text-primary-foreground shadow'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          {f.symbol}
+        </button>
+      ))}
+      {showCustom && (
+        <button
+          onClick={() => onSelect(null)}
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+            selectedIdx === null
+              ? 'bg-primary text-primary-foreground shadow'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          직접 입력
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
 // 틱 계산기
 // ──────────────────────────────────────────────
 function TickCalculator() {
   const { data: forex, isLoading, isError, refetch } = useForexRates();
   const [futIdx, setFutIdx] = useState<number | null>(0);
-  const [tickSizeStr,  setTickSizeStr]  = useState(String(FUTURES[0].tickSize));
-  const [tickValueStr, setTickValueStr] = useState(String(FUTURES[0].tickValue));
-  const [marginStr,    setMarginStr]    = useState(String(FUTURES[0].margin));
+  const [tickSizeStr,    setTickSizeStr]    = useState(String(FUTURES[0].tickSize));
+  const [tickValueStr,   setTickValueStr]   = useState(String(FUTURES[0].tickValue));
+  const [marginStr,      setMarginStr]      = useState(String(FUTURES[0].margin));
+  const [commissionStr,  setCommissionStr]  = useState('2.5'); // USD per contract per side
   const [contracts, setContracts] = useState('1');
   const [entry, setEntry] = useState('');
   const [target, setTarget] = useState('');
@@ -107,8 +151,9 @@ function TickCalculator() {
   const [direction, setDirection] = useState<'long' | 'short'>('long');
 
   // 프리셋 선택 → 스펙 자동 입력
-  const handleSelectFuture = (i: number) => {
+  const handleSelectFuture = (i: number | null) => {
     setFutIdx(i);
+    if (i === null) return;
     setEntry(''); setTarget(''); setStop('');
     setTickSizeStr(String(FUTURES[i].tickSize));
     setTickValueStr(String(FUTURES[i].tickValue));
@@ -117,15 +162,16 @@ function TickCalculator() {
 
   const cnt = Math.max(1, parseInt(contracts) || 1);
 
-  // 스펙 파싱 (입력값 기준 — 프리셋 선택 여부와 무관하게 이 값으로 계산)
-  const tickSize  = Math.max(0.0001, parseFloat(tickSizeStr)  || 0.25);
-  const tickValue = Math.max(0.01,   parseFloat(tickValueStr) || 5);
-  const margin    = Math.max(0,      parseFloat(marginStr)    || 0);
+  // 스펙 파싱
+  const tickSize   = Math.max(0.0001, parseFloat(tickSizeStr)   || 0.25);
+  const tickValue  = Math.max(0.01,   parseFloat(tickValueStr)  || 5);
+  const margin     = Math.max(0,      parseFloat(marginStr)     || 0);
+  const commission = Math.max(0,      parseFloat(commissionStr) || 0); // per contract per side
 
   // 실시간 KRW 환율 (1 USD = X KRW)
   const krwRate = useMemo(() => {
     if (forex?.rates?.KRW) return forex.rates.KRW;
-    return 1320; // 로딩 전 기본값
+    return 1320;
   }, [forex]);
 
   const calcResult = (priceStr: string) => {
@@ -133,25 +179,27 @@ function TickCalculator() {
     const entryVal = parseFloat(entry);
     if (isNaN(price) || isNaN(entryVal)) return null;
     const ticks = Math.round((price - entryVal) / tickSize);
-    const usd   = ticks * tickValue * cnt;
-    const won   = usd * krwRate;
-    return { ticks, usd, won };
+    const grossUsd = ticks * tickValue * cnt;
+    // 수수료: 진입 + 청산 2회 (round-trip)
+    const commTotal = commission * cnt * 2;
+    const netUsd    = grossUsd - (grossUsd >= 0 ? commTotal : -commTotal);
+    const netWon    = netUsd * krwRate;
+    return { ticks, grossUsd, netUsd, netWon, commTotal };
   };
 
   const tgt = calcResult(target);
   const stp = calcResult(stop);
 
-  // 방향 기반 손익 판단
   const longDir = direction === 'long';
   const tgtIsProfit = tgt != null && (longDir ? tgt.ticks > 0 : tgt.ticks < 0);
   const stpIsLoss   = stp != null && (longDir ? stp.ticks < 0 : stp.ticks > 0);
 
-  // 유효한 셋업(목표=수익, 손절=손실)일 때만 R:R 표시
   const rr = tgtIsProfit && stpIsLoss
     ? Math.abs(tgt!.ticks / stp!.ticks).toFixed(2)
     : null;
 
   const futDef = futIdx !== null ? FUTURES[futIdx] : null;
+  const hasCommission = commission > 0;
 
   return (
     <div className="space-y-4">
@@ -166,31 +214,7 @@ function TickCalculator() {
       </div>
 
       {/* 종목 선택 */}
-      <div className="flex flex-wrap gap-1.5">
-        {FUTURES.map((f, i) => (
-          <button
-            key={f.symbol}
-            onClick={() => handleSelectFuture(i)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-              i === futIdx
-                ? 'bg-primary text-primary-foreground shadow'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            {f.symbol}
-          </button>
-        ))}
-        <button
-          onClick={() => setFutIdx(null)}
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-            futIdx === null
-              ? 'bg-primary text-primary-foreground shadow'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          직접 입력
-        </button>
-      </div>
+      <FutureSelector selectedIdx={futIdx} onSelect={handleSelectFuture} showCustom />
 
       {/* 매수/매도 방향 */}
       <div className="grid grid-cols-2 gap-2">
@@ -216,7 +240,7 @@ function TickCalculator() {
         </button>
       </div>
 
-      {/* 종목 스펙 입력 (프리셋 선택 시 자동 채워짐, 직접 수정 가능) */}
+      {/* 종목 스펙 */}
       <div className="space-y-1.5">
         {futDef && (
           <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
@@ -256,14 +280,23 @@ function TickCalculator() {
         </div>
       </div>
 
-      {/* 계약수 + 실시간 환율 표시 */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* 계약수 + 수수료 + 환율 */}
+      <div className="grid grid-cols-3 gap-2">
         <div>
           <label className="text-[11px] text-muted-foreground font-medium block mb-1">계약수 / 로트</label>
           <input
             type="number" min="1" value={contracts}
             onChange={(e) => setContracts(e.target.value)}
             className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium block mb-1">수수료 ($/계약)</label>
+          <input
+            type="number" min="0" step="0.5" value={commissionStr}
+            onChange={(e) => setCommissionStr(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="2.5"
           />
         </div>
         <div>
@@ -275,11 +308,10 @@ function TickCalculator() {
           </label>
           <div className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border/50 text-sm font-bold tabular-nums">
             {isLoading ? (
-              <span className="text-muted-foreground">로딩 중…</span>
+              <span className="text-muted-foreground text-xs">로딩…</span>
             ) : (
               <>
-                ₩ {fmt(krwRate, 1)}
-                <span className="text-[10px] text-muted-foreground font-normal ml-1">/USD</span>
+                ₩{fmt(krwRate, 0)}
               </>
             )}
           </div>
@@ -301,7 +333,9 @@ function TickCalculator() {
         {/* 목표가 */}
         <div className="flex items-center gap-2">
           <div className="flex-1">
-            <label className="text-[11px] text-muted-foreground font-medium block mb-1"><img src="/icons/icon-target.png" alt="" className="w-3.5 h-3.5 inline-block align-middle mr-0.5" /> 목표가</label>
+            <label className="text-[11px] text-muted-foreground font-medium block mb-1">
+              <img src="/icons/icon-target.png" alt="" className="w-3.5 h-3.5 inline-block align-middle mr-0.5" /> 목표가
+            </label>
             <input
               type="number" step={tickSize} value={target}
               onChange={(e) => setTarget(e.target.value)}
@@ -317,11 +351,22 @@ function TickCalculator() {
               <p className={`text-xs font-bold ${tgtIsProfit ? 'text-emerald-500' : 'text-red-500'}`}>
                 {tgt.ticks > 0 ? '+' : ''}{tgt.ticks}틱
               </p>
-              <p className={`text-xs font-semibold ${tgtIsProfit ? 'text-emerald-500' : 'text-red-500'}`}>
-                {fmtUSD(tgt.usd)}
-              </p>
+              {hasCommission ? (
+                <>
+                  <p className={`text-[10px] line-through text-muted-foreground`}>
+                    {fmtUSD(tgt.grossUsd)}
+                  </p>
+                  <p className={`text-xs font-semibold ${tgtIsProfit ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {fmtUSD(tgt.netUsd)} <span className="text-[9px] font-normal opacity-70">수수료 후</span>
+                  </p>
+                </>
+              ) : (
+                <p className={`text-xs font-semibold ${tgtIsProfit ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {fmtUSD(tgt.grossUsd)}
+                </p>
+              )}
               <p className={`text-[10px] ${tgtIsProfit ? 'text-emerald-400' : 'text-red-400'}`}>
-                {fmtKRW(tgt.won)}
+                {fmtKRW(tgt.netWon)}
               </p>
             </div>
           )}
@@ -346,11 +391,22 @@ function TickCalculator() {
               <p className={`text-xs font-bold ${stpIsLoss ? 'text-red-500' : 'text-emerald-500'}`}>
                 {stp.ticks > 0 ? '+' : ''}{stp.ticks}틱
               </p>
-              <p className={`text-xs font-semibold ${stpIsLoss ? 'text-red-500' : 'text-emerald-500'}`}>
-                {fmtUSD(stp.usd)}
-              </p>
+              {hasCommission ? (
+                <>
+                  <p className="text-[10px] line-through text-muted-foreground">
+                    {fmtUSD(stp.grossUsd)}
+                  </p>
+                  <p className={`text-xs font-semibold ${stpIsLoss ? 'text-red-500' : 'text-emerald-500'}`}>
+                    {fmtUSD(stp.netUsd)} <span className="text-[9px] font-normal opacity-70">수수료 후</span>
+                  </p>
+                </>
+              ) : (
+                <p className={`text-xs font-semibold ${stpIsLoss ? 'text-red-500' : 'text-emerald-500'}`}>
+                  {fmtUSD(stp.grossUsd)}
+                </p>
+              )}
               <p className={`text-[10px] ${stpIsLoss ? 'text-red-400' : 'text-emerald-400'}`}>
-                {fmtKRW(stp.won)}
+                {fmtKRW(stp.netWon)}
               </p>
             </div>
           )}
@@ -364,18 +420,25 @@ function TickCalculator() {
           <div className="text-right">
             <span className="text-xl font-extrabold text-primary">1 : {rr}</span>
             <p className="text-[10px] text-muted-foreground mt-0.5">
-              손실 ${Math.abs(stp.usd / cnt).toFixed(0)} → 수익 ${Math.abs(tgt.usd / cnt).toFixed(0)} (계약당)
+              손실 ${Math.abs(stp.netUsd / cnt).toFixed(0)} → 수익 ${Math.abs(tgt.netUsd / cnt).toFixed(0)} (계약당{hasCommission ? ', 수수료 후' : ''})
             </p>
             {margin > 0 && (
               <p className="text-[10px] text-muted-foreground">
                 손절시 증거금 대비&nbsp;
                 <span className="text-red-400 font-semibold">
-                  {(Math.abs(stp.usd) / (margin * cnt) * 100).toFixed(1)}% 손실
+                  {(Math.abs(stp.netUsd) / (margin * cnt) * 100).toFixed(1)}% 손실
                 </span>
               </p>
             )}
           </div>
         </div>
+      )}
+
+      {/* 수수료 안내 */}
+      {hasCommission && (
+        <p className="text-[10px] text-muted-foreground text-center">
+          수수료 ${commission.toFixed(2)}/계약/편도 · 왕복 ${(commission * 2).toFixed(2)}/계약
+        </p>
       )}
 
       {/* 틱 레퍼런스 */}
@@ -407,6 +470,213 @@ function TickCalculator() {
               ))}
             </tbody>
           </table>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// 포지션 사이징 계산기
+// ──────────────────────────────────────────────
+function PositionSizingCalculator() {
+  const { data: forex, isLoading, isError, refetch } = useForexRates();
+  const [futIdx, setFutIdx] = useState<number>(0);
+  const [accountStr,    setAccountStr]    = useState('50000');
+  const [riskPctStr,    setRiskPctStr]    = useState('1');
+  const [stopTicksStr,  setStopTicksStr]  = useState('20');
+  const [commissionStr, setCommissionStr] = useState('2.5'); // per contract per side
+
+  const krwRate = useMemo(() => {
+    if (forex?.rates?.KRW) return forex.rates.KRW;
+    return 1320;
+  }, [forex]);
+
+  const future    = FUTURES[futIdx];
+  const account   = Math.max(0, parseFloat(accountStr)   || 0);
+  const riskPct   = Math.max(0, parseFloat(riskPctStr)   || 0);
+  const stopTicks = Math.max(1, parseInt(stopTicksStr)    || 1);
+  const commission = Math.max(0, parseFloat(commissionStr) || 0);
+
+  const result = useMemo(() => {
+    if (!account || !riskPct || !stopTicks) return null;
+
+    const maxRiskUsd     = account * (riskPct / 100);
+    // 1계약 손실 = 손절틱 × 틱가치 + 왕복 수수료
+    const lossPerContract = stopTicks * future.tickValue + commission * 2;
+    if (lossPerContract <= 0) return null;
+
+    const rawContracts   = maxRiskUsd / lossPerContract;
+    const contracts      = Math.max(0, Math.floor(rawContracts));
+    const actualRiskUsd  = contracts * lossPerContract;
+    const actualRiskPct  = account > 0 ? (actualRiskUsd / account) * 100 : 0;
+    const marginRequired = contracts * future.margin;
+    const marginPct      = account > 0 ? (marginRequired / account) * 100 : 0;
+    const stopLossUsd    = stopTicks * future.tickValue * contracts;
+
+    return {
+      contracts,
+      rawContracts,
+      maxRiskUsd,
+      actualRiskUsd,
+      actualRiskPct,
+      marginRequired,
+      marginPct,
+      stopLossUsd,
+      lossPerContract,
+      marginOk: marginRequired <= account,
+    };
+  }, [account, riskPct, stopTicks, commission, future]);
+
+  return (
+    <div className="space-y-4">
+      {/* 상태 배지 */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground font-medium">포지션 사이징</p>
+        <RateBadge
+          isLoading={isLoading} isError={isError}
+          updatedAt={forex?.updatedAt}
+          onRefresh={() => refetch()}
+        />
+      </div>
+
+      {/* 종목 선택 */}
+      <div>
+        <p className="text-[11px] text-muted-foreground font-medium mb-1.5">종목 선택</p>
+        <FutureSelector selectedIdx={futIdx} onSelect={(i) => { if (i !== null) setFutIdx(i); }} />
+      </div>
+
+      {/* 선택 종목 스펙 */}
+      <div className="px-3 py-2 rounded-xl bg-muted/40 border border-border/30 flex items-center gap-3 flex-wrap text-xs">
+        <span className="text-base">{future.emoji}</span>
+        <span className="font-semibold">{future.symbol}</span>
+        <span className="text-muted-foreground">{future.name}</span>
+        <span className="ml-auto font-mono">틱 {future.tickSize} = ${future.tickValue}</span>
+        <span className="font-mono text-muted-foreground">증거금 ${fmt(future.margin)}</span>
+      </div>
+
+      {/* 입력값 */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium block mb-1">계좌 잔고 ($)</label>
+          <input
+            type="number" min="0" value={accountStr}
+            onChange={(e) => setAccountStr(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="50000"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium block mb-1">리스크 비율 (%)</label>
+          <input
+            type="number" min="0.1" max="100" step="0.1" value={riskPctStr}
+            onChange={(e) => setRiskPctStr(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="1"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium block mb-1">손절 틱수</label>
+          <input
+            type="number" min="1" value={stopTicksStr}
+            onChange={(e) => setStopTicksStr(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="20"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-muted-foreground font-medium block mb-1">수수료 ($/계약/편도)</label>
+          <input
+            type="number" min="0" step="0.5" value={commissionStr}
+            onChange={(e) => setCommissionStr(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl bg-muted/60 border border-border/50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+            placeholder="2.5"
+          />
+        </div>
+      </div>
+
+      {/* 결과 */}
+      {result ? (
+        <div className="space-y-3">
+          {/* 권장 계약수 — 메인 */}
+          <div className="px-5 py-4 rounded-2xl bg-primary/10 border border-primary/30 text-center">
+            <p className="text-[11px] text-muted-foreground mb-1">권장 계약수</p>
+            <p className="text-5xl font-extrabold tracking-tight text-primary">
+              {result.contracts}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {future.symbol} · 계좌 {riskPct}% 리스크 · 손절 {stopTicksStr}틱
+            </p>
+            {result.rawContracts < 1 && (
+              <p className="text-[11px] text-amber-500 mt-1">
+                ⚠ 계좌 대비 리스크가 너무 작아 0계약 — 손절 틱수를 줄이거나 리스크 비율을 늘리세요
+              </p>
+            )}
+          </div>
+
+          {/* 상세 분석 */}
+          <div className="rounded-xl border border-border/40 overflow-hidden">
+            <div className="px-3 py-2 bg-muted/40">
+              <p className="text-[11px] font-semibold text-muted-foreground">상세 분석</p>
+            </div>
+            <div className="divide-y divide-border/30">
+              <div className="flex justify-between px-4 py-2.5 text-sm">
+                <span className="text-muted-foreground">최대 허용 손실</span>
+                <span className="font-semibold text-red-500">
+                  -${fmt(result.maxRiskUsd, 2)}
+                  <span className="text-xs text-muted-foreground font-normal ml-1">({riskPct}%)</span>
+                </span>
+              </div>
+              <div className="flex justify-between px-4 py-2.5 text-sm">
+                <span className="text-muted-foreground">실제 리스크</span>
+                <span className="font-semibold">
+                  -${fmt(result.actualRiskUsd, 2)}
+                  <span className="text-xs text-muted-foreground font-normal ml-1">({result.actualRiskPct.toFixed(2)}%)</span>
+                </span>
+              </div>
+              <div className="flex justify-between px-4 py-2.5 text-sm">
+                <span className="text-muted-foreground">손절 손실 (수수료 전)</span>
+                <span className="font-semibold">-${fmt(result.stopLossUsd, 2)}</span>
+              </div>
+              <div className="flex justify-between px-4 py-2.5 text-sm">
+                <span className="text-muted-foreground">필요 증거금</span>
+                <span className={`font-semibold ${result.marginOk ? '' : 'text-red-500'}`}>
+                  ${fmt(result.marginRequired)}
+                  <span className="text-xs text-muted-foreground font-normal ml-1">({result.marginPct.toFixed(1)}%)</span>
+                  {!result.marginOk && <span className="ml-1 text-red-500">⚠ 부족</span>}
+                </span>
+              </div>
+              <div className="flex justify-between px-4 py-2.5 text-sm">
+                <span className="text-muted-foreground">계약당 손실 (수수료 포함)</span>
+                <span className="font-semibold">-${result.lossPerContract.toFixed(2)}</span>
+              </div>
+              {krwRate > 0 && result.contracts > 0 && (
+                <div className="flex justify-between px-4 py-2.5 text-sm">
+                  <span className="text-muted-foreground">실제 리스크 (원화)</span>
+                  <span className="font-semibold text-red-500">
+                    -{Math.round(result.actualRiskUsd * krwRate).toLocaleString('ko-KR')}원
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="px-5 py-8 rounded-2xl bg-muted/30 border border-border/30 text-center">
+          <p className="text-sm text-muted-foreground">계좌 잔고와 리스크 비율을 입력하세요</p>
+        </div>
+      )}
+
+      {/* 계산 방법 안내 */}
+      <details className="group">
+        <summary className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors list-none">
+          <Info className="w-3 h-3" />
+          계산 방법
+        </summary>
+        <div className="mt-2 px-3 py-3 rounded-xl bg-muted/30 border border-border/30 text-[11px] text-muted-foreground space-y-1">
+          <p>권장 계약수 = 바닥(최대손실 ÷ 계약당손실)</p>
+          <p>계약당손실 = 손절틱 × 틱가치 + 수수료 × 2</p>
+          <p>최대손실 = 계좌잔고 × 리스크%</p>
         </div>
       </details>
     </div>
@@ -455,7 +725,6 @@ function FxCalculator() {
     return `1 ${from} = ${r.toLocaleString('ko-KR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })} ${to}`;
   }, [from, to, usdPer]);
 
-  // 1 USD 기준 각 통화 값 (표시용)
   const usdToOther = useMemo<Partial<Record<Ccy, string>>>(() => {
     const r = forex?.rates;
     if (!r) return {};
@@ -473,7 +742,6 @@ function FxCalculator() {
 
   return (
     <div className="space-y-4">
-      {/* 상태 배지 */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground font-medium">실시간 환율 변환</p>
         <RateBadge
@@ -483,7 +751,6 @@ function FxCalculator() {
         />
       </div>
 
-      {/* 금액 입력 */}
       <div>
         <label className="text-[11px] text-muted-foreground font-medium block mb-1">금액</label>
         <input
@@ -494,9 +761,7 @@ function FxCalculator() {
         />
       </div>
 
-      {/* 통화 선택 */}
       <div className="flex items-center gap-2">
-        {/* From */}
         <div className="flex-1">
           <label className="text-[11px] text-muted-foreground font-medium block mb-1">변환 전</label>
           <div className="grid grid-cols-4 gap-1">
@@ -517,7 +782,6 @@ function FxCalculator() {
           </div>
         </div>
 
-        {/* Swap */}
         <button
           onClick={swap}
           className="mt-5 p-2 rounded-full bg-muted hover:bg-muted/70 transition-colors shrink-0"
@@ -526,7 +790,6 @@ function FxCalculator() {
           <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
         </button>
 
-        {/* To */}
         <div className="flex-1">
           <label className="text-[11px] text-muted-foreground font-medium block mb-1">변환 후</label>
           <div className="grid grid-cols-4 gap-1">
@@ -548,7 +811,6 @@ function FxCalculator() {
         </div>
       </div>
 
-      {/* 결과 */}
       {result !== null ? (
         <div className="px-5 py-4 rounded-2xl bg-primary/10 border border-primary/30 text-center space-y-1">
           <p className="text-[11px] text-muted-foreground">
@@ -573,7 +835,6 @@ function FxCalculator() {
         </div>
       )}
 
-      {/* 실시간 환율 참고 테이블 */}
       <div className="rounded-xl border border-border/40 overflow-hidden">
         <div className="flex items-center justify-between px-3 py-2 bg-muted/40">
           <p className="text-[11px] font-semibold text-muted-foreground">실시간 환율 (USD 기준)</p>
@@ -614,18 +875,26 @@ export function CalculatorTab() {
     <div className="max-w-lg mx-auto">
       <div className="mb-5">
         <h2 className="text-lg font-bold">🧮 트레이더 계산기</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">실시간 환율 기반 · 틱 손익 & 환율 변환</p>
+        <p className="text-xs text-muted-foreground mt-0.5">실시간 환율 기반 · 틱 손익 · 포지션 사이징 · 환율 변환</p>
       </div>
 
       <Tabs defaultValue="tick">
-        <TabsList className="w-full h-10 rounded-xl bg-muted p-1 mb-5 grid grid-cols-2">
-          <TabsTrigger value="tick" className="text-sm rounded-lg font-semibold flex items-center gap-1.5"><img src="/icons/icon-chart-up.png" alt="" className="w-4 h-4" /> 틱 계산기</TabsTrigger>
-          <TabsTrigger value="fx"   className="text-sm rounded-lg font-semibold">💱 환율 계산기</TabsTrigger>
+        <TabsList className="w-full h-10 rounded-xl bg-muted p-1 mb-5 grid grid-cols-3">
+          <TabsTrigger value="tick"     className="text-xs rounded-lg font-semibold flex items-center gap-1">
+            <img src="/icons/icon-chart-up.png" alt="" className="w-3.5 h-3.5" /> 틱 계산기
+          </TabsTrigger>
+          <TabsTrigger value="position" className="text-xs rounded-lg font-semibold">
+            📐 포지션 사이징
+          </TabsTrigger>
+          <TabsTrigger value="fx"       className="text-xs rounded-lg font-semibold">
+            💱 환율 변환
+          </TabsTrigger>
         </TabsList>
 
         <div className="glass-card rounded-2xl p-5">
-          <TabsContent value="tick" className="mt-0"><TickCalculator /></TabsContent>
-          <TabsContent value="fx"   className="mt-0"><FxCalculator /></TabsContent>
+          <TabsContent value="tick"     className="mt-0"><TickCalculator /></TabsContent>
+          <TabsContent value="position" className="mt-0"><PositionSizingCalculator /></TabsContent>
+          <TabsContent value="fx"       className="mt-0"><FxCalculator /></TabsContent>
         </div>
       </Tabs>
     </div>

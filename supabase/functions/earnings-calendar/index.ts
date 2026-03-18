@@ -67,6 +67,8 @@ interface EarningsEvent {
   epsEstimate?: string;
   epsActual?: string;
   epsSurprisePct?: number;
+  revenueEstimate?: number;
+  revenueActual?: number;
   timing: 'BMO' | 'AMC' | 'TNS';
 }
 
@@ -75,6 +77,8 @@ interface FinnhubEarning {
   symbol: string;
   epsActual: number | null;
   epsEstimate: number | null;
+  revenueActual: number | null;
+  revenueEstimate: number | null;
   hour: string;
 }
 
@@ -154,6 +158,8 @@ async function fetchFromFinnhub(): Promise<EarningsEvent[]> {
       epsEstimate: epsEst,
       epsActual: epsAct,
       epsSurprisePct: calcSurprise(epsEst, epsAct),
+      revenueEstimate: e.revenueEstimate ?? undefined,
+      revenueActual: e.revenueActual ?? undefined,
       timing,
     });
   }
