@@ -185,9 +185,10 @@ export function useNotifications(
     if (activeAlerts.length === 0) return;
 
     const triggeredIds = new Set<string>();
+    const quoteMap = new Map(quotes.map(q => [q.symbol, q]));
 
     activeAlerts.forEach(alert => {
-      const q = quotes.find(q => q.symbol === alert.symbol);
+      const q = quoteMap.get(alert.symbol);
       if (!q) return;
 
       const hit =

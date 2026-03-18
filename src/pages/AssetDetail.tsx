@@ -43,6 +43,9 @@ const ASSET_KEYWORDS: Record<string, string[]> = {
   USDCAD:  ['BOC', '캐나다', 'CPI', '원유', 'EIA', '달러'],
 };
 
+// 오늘 날짜 문자열 — 컴포넌트 마운트마다 재계산하지 않도록 모듈 레벨에 위치
+const TODAY_STR = new Date().toISOString().slice(0, 10);
+
 const RANGE_OPTIONS = [
   { label: '1일', range: '1d', interval: '5m' },
   { label: '5일', range: '5d', interval: '15m' },
@@ -118,8 +121,6 @@ const AssetDetail = () => {
 
   const keyLevels = dynamicLevels || detail?.keyLevels;
 
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
-
   // 실제 경제 이벤트 필터링 (오늘~3일 이내)
   const relatedEvents = useMemo(() => {
     const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
@@ -129,7 +130,7 @@ const AssetDetail = () => {
       const endStr = endDate.toISOString().slice(0, 10);
       const real = allEvents
         .filter(e =>
-          e.date >= todayStr &&
+          e.date >= TODAY_STR &&
           e.date <= endStr &&
           e.category !== 'earnings' &&
           keywords.some(kw => e.name.includes(kw))
@@ -163,7 +164,7 @@ const AssetDetail = () => {
     const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
     if (!allEvents?.length || !keywords.length) return [];
     return allEvents
-      .filter(e => e.date === todayStr && e.category !== 'earnings' && keywords.some(kw => e.name.includes(kw)))
+      .filter(e => e.date === TODAY_STR && e.category !== 'earnings' && keywords.some(kw => e.name.includes(kw)))
       .map(e => ({
         time: e.time,
         country: e.country ?? '',
@@ -300,6 +301,11 @@ const AssetDetail = () => {
 
   const chartColor = isUp ? 'hsl(var(--up))' : 'hsl(var(--down))';
   const activeAlertCount = symbolAlerts.filter(a => !a.triggered).length;
+  const prevClose = quote.price - quote.change;
+  const todayOpen = chartData?.[0]?.open ?? null;
+  const week52Pct = quote.week52High != null && quote.week52Low != null && quote.week52High > quote.week52Low
+    ? Math.min(100, Math.max(0, ((quote.price - quote.week52Low) / (quote.week52High - quote.week52Low)) * 100))
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -332,7 +338,7 @@ const AssetDetail = () => {
               </div>
             </div>
             {/* 가격 알림 설정 Popover */}
-            <Popover open={alertOpen} onOpenChange={(o) => { setAlertOpen(o); if (o) setSymbolAlerts(loadPriceAlerts().filter(a => a.symbol === upperSymbol)); }}>
+            <Popover open={alertOpen} onOpenChange={setAlertOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
@@ -533,25 +539,19 @@ const AssetDetail = () => {
               </div>
             )}
             {/* 가격 상세 - 차트 하단 4칸 */}
-            {(() => {
-              const prevClose = quote.price - quote.change;
-              const todayOpen = chartData?.[0]?.open ?? null;
-              return (
-                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/20">
-                  {[
-                    { label: '전일 종가', value: prevClose.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '🕐' },
-                    { label: '금일 시가', value: todayOpen != null ? todayOpen.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-', emoji: '🔔' },
-                    { label: '고가', value: quote.high.toLocaleString(), emoji: '⬆️' },
-                    { label: '저가', value: quote.low.toLocaleString(), emoji: '⬇️' },
-                  ].map((item, i) => (
-                    <div key={i} className="text-center p-2 rounded-xl bg-muted/50">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-medium">{item.emoji} {item.label}</p>
-                      <p className="text-xs sm:text-sm font-bold font-mono">{item.value}</p>
-                    </div>
-                  ))}
+            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border/20">
+              {[
+                { label: '전일 종가', value: prevClose.toLocaleString('en-US', { minimumFractionDigits: 2 }), emoji: '🕐' },
+                { label: '금일 시가', value: todayOpen != null ? todayOpen.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-', emoji: '🔔' },
+                { label: '고가', value: quote.high.toLocaleString(), emoji: '⬆️' },
+                { label: '저가', value: quote.low.toLocaleString(), emoji: '⬇️' },
+              ].map((item, i) => (
+                <div key={i} className="text-center p-2 rounded-xl bg-muted/50">
+                  <p className="text-[10px] text-muted-foreground mb-1 font-medium">{item.emoji} {item.label}</p>
+                  <p className="text-xs sm:text-sm font-bold font-mono">{item.value}</p>
                 </div>
-              );
-            })()}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -650,36 +650,33 @@ const AssetDetail = () => {
             )}
 
             {/* 52-Week Range */}
-            {quote.week52High != null && quote.week52Low != null && quote.week52High > quote.week52Low && (() => {
-              const pct = Math.min(100, Math.max(0, ((quote.price - quote.week52Low!) / (quote.week52High! - quote.week52Low!)) * 100));
-              return (
-                <Card className="rounded-xl">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-bold">📏 52주 레인지</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1.5 font-medium">
-                      <span className="font-mono">{quote.week52Low!.toLocaleString()}</span>
-                      <span>현재가 ({pct.toFixed(1)}%)</span>
-                      <span className="font-mono">{quote.week52High!.toLocaleString()}</span>
-                    </div>
-                    <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                      <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-down/50 via-muted-foreground/20 to-up/50" style={{ width: '100%' }} />
-                      <div
-                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card shadow-md"
-                        style={{
-                          left: `calc(${pct}% - 8px)`,
-                          backgroundColor: isUp ? 'hsl(var(--up))' : 'hsl(var(--down))',
-                        }}
-                      />
-                    </div>
-                    <p className="text-center text-sm font-mono font-bold mt-2">
-                      {quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })()}
+            {week52Pct !== null && (
+              <Card className="rounded-xl">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-bold">📏 52주 레인지</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1.5 font-medium">
+                    <span className="font-mono">{quote.week52Low!.toLocaleString()}</span>
+                    <span>현재가 ({week52Pct.toFixed(1)}%)</span>
+                    <span className="font-mono">{quote.week52High!.toLocaleString()}</span>
+                  </div>
+                  <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-down/50 via-muted-foreground/20 to-up/50" style={{ width: '100%' }} />
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card shadow-md"
+                      style={{
+                        left: `calc(${week52Pct}% - 8px)`,
+                        backgroundColor: isUp ? 'hsl(var(--up))' : 'hsl(var(--down))',
+                      }}
+                    />
+                  </div>
+                  <p className="text-center text-sm font-mono font-bold mt-2">
+                    {quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 

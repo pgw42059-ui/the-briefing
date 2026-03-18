@@ -35,6 +35,18 @@ const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
 const FX_SYMBOLS = ['EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
 const ALL_SYMBOLS = [...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS, ...FX_SYMBOLS];
 
+function SignalGrid({ items }: { items: ReturnType<typeof computeAllSignals> }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+      {items.map((s) => (
+        <Suspense key={s.symbol} fallback={<Skeleton className="h-[120px] rounded-xl" />}>
+          <SentimentGauge signal={s} />
+        </Suspense>
+      ))}
+    </div>
+  );
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const { data: quotes, isLoading, isError, isPlaceholderData, refetch } = useMarketQuotes();
@@ -55,13 +67,17 @@ const Index = () => {
   const { user, displayName, signOut } = useAuth();
   const { symbols: watchlistSymbols, isWatched, toggle: toggleWatchlist } = useWatchlist();
 
-  const indexQuotes = useMemo(() => quotes?.filter(q => INDEX_SYMBOLS.includes(q.symbol)) || [], [quotes]);
-  const commodityQuotes = useMemo(() => quotes?.filter(q => COMMODITY_SYMBOLS.includes(q.symbol)) || [], [quotes]);
-  const fxQuotes = useMemo(() => quotes?.filter(q => FX_SYMBOLS.includes(q.symbol)) || [], [quotes]);
-  const watchlistQuotes = useMemo(() => quotes?.filter(q => watchlistSymbols.includes(q.symbol)) || [], [quotes, watchlistSymbols]);
-  const indexSignals = useMemo(() => signals.filter(s => INDEX_SYMBOLS.includes(s.symbol)), [signals]);
-  const commoditySignals = useMemo(() => signals.filter(s => COMMODITY_SYMBOLS.includes(s.symbol)), [signals]);
-  const fxSignals = useMemo(() => signals.filter(s => FX_SYMBOLS.includes(s.symbol)), [signals]);
+  const { indexQuotes, commodityQuotes, fxQuotes } = useMemo(() => ({
+    indexQuotes: quotes?.filter(q => INDEX_SYMBOLS.includes(q.symbol)) ?? [],
+    commodityQuotes: quotes?.filter(q => COMMODITY_SYMBOLS.includes(q.symbol)) ?? [],
+    fxQuotes: quotes?.filter(q => FX_SYMBOLS.includes(q.symbol)) ?? [],
+  }), [quotes]);
+  const watchlistQuotes = useMemo(() => quotes?.filter(q => watchlistSymbols.includes(q.symbol)) ?? [], [quotes, watchlistSymbols]);
+  const { indexSignals, commoditySignals, fxSignals } = useMemo(() => ({
+    indexSignals: signals.filter(s => INDEX_SYMBOLS.includes(s.symbol)),
+    commoditySignals: signals.filter(s => COMMODITY_SYMBOLS.includes(s.symbol)),
+    fxSignals: signals.filter(s => FX_SYMBOLS.includes(s.symbol)),
+  }), [signals]);
 
   const todayEvents = useMemo(() => {
     if (!allEvents) return undefined;
@@ -78,16 +94,6 @@ const Index = () => {
     await clearCache();
     forceRefetch();
   }, [clearCache, forceRefetch]);
-
-  const renderSignalGrid = (items: typeof signals) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-      {items.map((s) => (
-        <Suspense key={s.symbol} fallback={<Skeleton className="h-[120px] rounded-xl" />}>
-          <SentimentGauge signal={s} />
-        </Suspense>
-      ))}
-    </div>
-  );
 
   const hasWatchlist = user && watchlistSymbols.length > 0;
 
@@ -380,9 +386,9 @@ const Index = () => {
                   </TabsTrigger>
                 </TabsList>
                 <Suspense fallback={<div className="min-h-[200px]" />}>
-                  <TabsContent value="indices" className="mt-0">{renderSignalGrid(indexSignals)}</TabsContent>
-                  <TabsContent value="commodities" className="mt-0">{renderSignalGrid(commoditySignals)}</TabsContent>
-                  <TabsContent value="fx" className="mt-0">{renderSignalGrid(fxSignals)}</TabsContent>
+                  <TabsContent value="indices" className="mt-0"><SignalGrid items={indexSignals} /></TabsContent>
+                  <TabsContent value="commodities" className="mt-0"><SignalGrid items={commoditySignals} /></TabsContent>
+                  <TabsContent value="fx" className="mt-0"><SignalGrid items={fxSignals} /></TabsContent>
                 </Suspense>
               </Tabs>
             </section>
