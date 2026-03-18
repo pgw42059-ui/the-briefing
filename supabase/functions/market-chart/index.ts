@@ -7,8 +7,8 @@ const corsHeaders = {
 
 const SYMBOL_MAP: Record<string, string> = {
   NQ: 'NQ=F', ES: 'ES=F', YM: 'YM=F', HSI: '^HSI', NIY: 'NIY=F',
-  STOXX50E: '^STOXX50E', GC: 'GC=F', SI: 'SI=F', CL: 'CL=F',
-  NG: 'NG=F', HG: 'HG=F', EURUSD: 'EURUSD=X', USDJPY: 'JPY=X',
+  STOXX50E: '^STOXX50E', VIX: '^VIX', GC: 'GC=F', SI: 'SI=F', CL: 'CL=F',
+  NG: 'NG=F', HG: 'HG=F', DXY: 'DX-Y.NYB', EURUSD: 'EURUSD=X', USDJPY: 'JPY=X',
   GBPUSD: 'GBPUSD=X', AUDUSD: 'AUDUSD=X', USDCAD: 'CAD=X',
 };
 
