@@ -208,9 +208,11 @@ const Index = () => {
       </header>
 
       <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
-        <Tabs defaultValue={defaultTab} className="w-full" onValueChange={(v) => {
+        <Tabs key={defaultTab} defaultValue={defaultTab} className="w-full" onValueChange={(v) => {
             if (v === 'calendar') navigate('/calendar');
             else if (v === 'calculator') navigate('/calculator');
+            else if (v === 'analysis') navigate('/?tab=analysis', { replace: true });
+            else if (v === 'quotes') navigate('/', { replace: true });
           }}>
           {/* Main Navigation Tabs */}
           <TabsList className="w-full h-11 sm:h-12 rounded-xl bg-muted/70 border border-border/50 p-1 mb-5 sm:mb-7 grid grid-cols-4 shadow-sm">
