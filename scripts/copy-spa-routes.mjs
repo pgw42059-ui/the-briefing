@@ -22,6 +22,7 @@ const ASSETS = [
   { symbol: 'hsi',      nameKr: '항셍 지수',       nameEn: 'Hang Seng Index Futures',   category: '주가지수 선물' },
   { symbol: 'niy',      nameKr: '닛케이 225',      nameEn: 'Nikkei 225 Futures',        category: '주가지수 선물' },
   { symbol: 'stoxx50e', nameKr: '유로스톡스 50',   nameEn: 'Euro Stoxx 50',             category: '주가지수 선물' },
+  { symbol: 'vix',      nameKr: 'VIX 공포지수',    nameEn: 'CBOE Volatility Index',     category: '변동성 지수' },
   { symbol: 'gc',       nameKr: '골드',            nameEn: 'Gold Futures (COMEX)',       category: '원자재 선물' },
   { symbol: 'si',       nameKr: '은',              nameEn: 'Silver Futures (COMEX)',     category: '원자재 선물' },
   { symbol: 'cl',       nameKr: '크루드 오일',     nameEn: 'WTI Crude Oil Futures',     category: '원자재 선물' },
@@ -32,6 +33,7 @@ const ASSETS = [
   { symbol: 'gbpusd',   nameKr: '파운드/달러',     nameEn: 'GBP/USD',                   category: 'FX 선물' },
   { symbol: 'audusd',   nameKr: '호주달러/달러',   nameEn: 'AUD/USD',                   category: 'FX 선물' },
   { symbol: 'usdcad',   nameKr: '달러/캐나다',     nameEn: 'USD/CAD',                   category: 'FX 선물' },
+  { symbol: 'dxy',      nameKr: '달러인덱스',      nameEn: 'US Dollar Index',           category: 'FX' },
 ];
 
 // 추가 정적 라우트 (메타데이터 주입 없이 단순 복사)
