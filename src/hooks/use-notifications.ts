@@ -94,18 +94,27 @@ export function useNotifications(
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Persist notifications
+  // Persist notifications — debounce 500ms (빠른 연속 변경 시 write 최소화)
   useEffect(() => {
-    localStorage.setItem(NOTIFS_KEY, JSON.stringify(notifications.slice(0, MAX_NOTIFICATIONS)));
+    const id = setTimeout(() => {
+      localStorage.setItem(NOTIFS_KEY, JSON.stringify(notifications.slice(0, MAX_NOTIFICATIONS)));
+    }, 500);
+    return () => clearTimeout(id);
   }, [notifications]);
 
   useEffect(() => {
-    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    const id = setTimeout(() => {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    }, 500);
+    return () => clearTimeout(id);
   }, [prefs]);
 
-  // Persist price alerts
+  // Persist price alerts — debounce 500ms
   useEffect(() => {
-    localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(priceAlerts));
+    const id = setTimeout(() => {
+      localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(priceAlerts));
+    }, 500);
+    return () => clearTimeout(id);
   }, [priceAlerts]);
 
   const addNotification = useCallback((notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {

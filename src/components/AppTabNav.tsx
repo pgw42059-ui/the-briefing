@@ -5,7 +5,7 @@
  * Index.tsx / CalendarPage / CalculatorPage 에서 공통으로 사용.
  */
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, LogIn, User, LogOut, TrendingUp, Brain, Calendar, Calculator } from 'lucide-react';
+import { Sun, Moon, LogIn, User, LogOut, TrendingUp, Brain, Calendar, Calculator, ExternalLink } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -90,6 +90,16 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
 
         {/* 우측 액션 버튼 */}
         <div className="flex items-center gap-1 shrink-0">
+          <a
+            href="https://merini.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
+            aria-label="메린이 메인 사이트로 이동"
+          >
+            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+            merini.com
+          </a>
           <Button
             variant="ghost"
             size="icon"

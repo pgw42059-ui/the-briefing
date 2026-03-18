@@ -8,6 +8,8 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
+
+const TODAY = new Date().toISOString().slice(0, 10);
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -111,3 +113,12 @@ for (const [route, meta] of Object.entries(PAGE_METAS)) {
 }
 
 console.log(`\n✅ ${count} route files generated.\n`);
+
+// ── sitemap.xml lastmod 오늘 날짜로 갱신 ──────────────────────
+const SITEMAP = join(__dirname, '..', 'public', 'sitemap.xml');
+if (existsSync(SITEMAP)) {
+  const updated = readFileSync(SITEMAP, 'utf-8')
+    .replace(/<lastmod>[^<]+<\/lastmod>/g, `<lastmod>${TODAY}</lastmod>`);
+  writeFileSync(SITEMAP, updated, 'utf-8');
+  console.log(`🗺  sitemap.xml lastmod → ${TODAY}\n`);
+}

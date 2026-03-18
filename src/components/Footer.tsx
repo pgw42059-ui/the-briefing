@@ -19,14 +19,14 @@ export const Footer = () => (
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
         >
-          <img src="/icons/icon-home.png" alt="" width={16} height={16} className="w-4 h-4" /> merini.com
+          <img src="/icons/icon-home.png" alt="" aria-hidden="true" width={16} height={16} className="w-4 h-4" /> merini.com
           <span className="text-[10px] text-muted-foreground">↗</span>
         </a>
       </div>
 
       <div className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed space-y-2">
         <p>
-          <img src="/icons/icon-warning.png" alt="" width={16} height={16} className="w-4 h-4 inline-block align-middle" /> <strong>면책 조항:</strong> 본 서비스에서 제공하는 시세, 시그널, 분석 정보는 투자 권유가 아니며, 참고 자료로만 활용하시기 바랍니다.
+          <img src="/icons/icon-warning.png" alt="" aria-hidden="true" width={16} height={16} className="w-4 h-4 inline-block align-middle" /> <strong>면책 조항:</strong> 본 서비스에서 제공하는 시세, 시그널, 분석 정보는 투자 권유가 아니며, 참고 자료로만 활용하시기 바랍니다.
           투자에 따른 손실은 전적으로 투자자 본인에게 있습니다.
         </p>
         <p>
