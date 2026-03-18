@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, lazy, Suspense, startTransition, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator, AlertCircle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { InstallBanner } from '@/components/InstallBanner';
@@ -8,12 +8,10 @@ import { Footer } from '@/components/Footer';
 
 const CompactQuoteList = lazy(() => import('@/components/CompactQuoteList').then(m => ({ default: m.CompactQuoteList })));
 const PriceCard = lazy(() => import('@/components/PriceCard').then(m => ({ default: m.PriceCard })));
-const EconomicCalendar = lazy(() => import('@/components/EconomicCalendar').then(m => ({ default: m.EconomicCalendar })));
 const SentimentGauge = lazy(() => import('@/components/SentimentGauge').then(m => ({ default: m.SentimentGauge })));
 const MarketSummary = lazy(() => import('@/components/MarketSummary').then(m => ({ default: m.MarketSummary })));
 const NotificationBell = lazy(() => import('@/components/NotificationBell').then(m => ({ default: m.NotificationBell })));
 const FearGreedGauge = lazy(() => import('@/components/FearGreedGauge').then(m => ({ default: m.FearGreedGauge })));
-const CalculatorTab = lazy(() => import('@/components/CalculatorTab').then(m => ({ default: m.CalculatorTab })));
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -49,6 +47,8 @@ function SignalGrid({ items }: { items: ReturnType<typeof computeAllSignals> }) 
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') ?? 'quotes';
   const { data: quotes, isLoading, isError, isPlaceholderData, refetch } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
   const { data: fearGreed } = useFearGreed();
@@ -208,7 +208,10 @@ const Index = () => {
       </header>
 
       <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
-        <Tabs defaultValue="quotes" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full" onValueChange={(v) => {
+            if (v === 'calendar') navigate('/calendar');
+            else if (v === 'calculator') navigate('/calculator');
+          }}>
           {/* Main Navigation Tabs */}
           <TabsList className="w-full h-11 sm:h-12 rounded-xl bg-muted/70 border border-border/50 p-1 mb-5 sm:mb-7 grid grid-cols-4 shadow-sm">
             <TabsTrigger value="quotes" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
@@ -397,19 +400,6 @@ const Index = () => {
             </section>
           </TabsContent>
 
-          {/* === 캘린더 탭 === */}
-          <TabsContent value="calendar" className="mt-0">
-            <Suspense fallback={<Skeleton className="h-[500px] rounded-xl" />}>
-              <EconomicCalendar />
-            </Suspense>
-          </TabsContent>
-
-          {/* === 계산기 탭 === */}
-          <TabsContent value="calculator" className="mt-0">
-            <Suspense fallback={<Skeleton className="h-[500px] rounded-xl" />}>
-              <CalculatorTab />
-            </Suspense>
-          </TabsContent>
         </Tabs>
       </main>
       <Footer />
