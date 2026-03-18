@@ -20,11 +20,13 @@ const ASSET_NAMES_KR: Record<string, string> = {
   HSI: '항셍',
   NIY: '닛케이',
   STOXX50E: '유로스톡스',
+  VIX: 'VIX',
   GC: '골드',
   SI: '은',
   CL: '오일',
   NG: '천연가스',
   HG: '구리',
+  DXY: '달러인덱스',
   EURUSD: '유로/달러',
   USDJPY: '달러/엔',
   GBPUSD: '파운드/달러',
@@ -143,9 +145,9 @@ export function computeAllSignals(quotes: FuturesQuote[]): MarketSignal[] {
 
 // ── Pillar helpers ─────────────────────────────────────────────
 
-const INDEX_SYMBOLS    = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E'];
+const INDEX_SYMBOLS    = ['NQ', 'ES', 'YM', 'HSI', 'NIY', 'STOXX50E', 'VIX'];
 const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
-const FX_SYMBOLS       = ['EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
+const FX_SYMBOLS       = ['DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
 
 function avgScore(signals: MarketSignal[], symbols: string[]): number {
   const filtered = signals.filter(s => symbols.includes(s.symbol));
