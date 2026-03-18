@@ -215,34 +215,62 @@ export function useNotifications(
     }
   }, [quotes, addNotification]);
 
-  // Economic calendar alerts (upcoming high-importance events)
+  // Economic calendar + Earnings alerts (high importance only)
   useEffect(() => {
     if (!events || !prefs.calendarEnabled) return;
 
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    // 경제지표: 10분·5분·1분 전 / 실적발표: 30분 전
+    const ECO_MILESTONES = [10, 5, 1];
+    const EARNINGS_MILESTONES = [30];
 
-    events
-      .filter(e => e.date === today && e.importance === 'high')
-      .forEach(e => {
-        const eventKey = `${e.date}-${e.time}-${e.name}`;
-        if (checkedEventsRef.current.has(eventKey)) return;
-        checkedEventsRef.current.add(eventKey);
+    const checkEvents = () => {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
 
-        const [h, m] = e.time.split(':').map(Number);
-        const eventTime = new Date(now);
-        eventTime.setHours(h, m, 0, 0);
+      // 날짜가 바뀌면 이전 날 키 정리 (자정 넘긴 뒤 누적 방지)
+      for (const key of checkedEventsRef.current) {
+        if (!key.startsWith(today)) checkedEventsRef.current.delete(key);
+      }
 
-        const diffMin = (eventTime.getTime() - now.getTime()) / 60000;
+      events
+        .filter(e =>
+          e.importance === 'high' &&
+          e.date === today &&
+          e.time &&
+          e.time !== 'TBD'
+        )
+        .forEach(e => {
+          const [h, m] = e.time.split(':').map(Number);
+          const eventTime = new Date(now);
+          eventTime.setHours(h, m, 0, 0);
+          const diffMin = (eventTime.getTime() - now.getTime()) / 60000;
 
-        if (diffMin > 0 && diffMin <= 30) {
-          addNotification({
-            type: 'calendar',
-            title: `${e.country} ${e.name}`,
-            message: `약 ${Math.round(diffMin)}분 후 발표 예정 (중요도: 높음)`,
-          });
-        }
-      });
+          if (diffMin <= 0) return; // 이미 지난 이벤트
+
+          const isEarnings = !!e.ticker;
+          const milestones = isEarnings ? EARNINGS_MILESTONES : ECO_MILESTONES;
+
+          for (const milestone of milestones) {
+            if (diffMin > milestone) continue; // 아직 이 마일스톤 구간 미진입
+            const key = `${e.date}-${e.name}-${e.time}-${milestone}`;
+            if (checkedEventsRef.current.has(key)) continue; // 이미 발송됨
+            checkedEventsRef.current.add(key);
+
+            const title = isEarnings
+              ? `📊 실적발표 예정: ${e.ticker}`
+              : `📅 ${e.name}`;
+            const message = isEarnings
+              ? `${e.companyName ?? e.ticker} ${milestone}분 후 실적 발표 예정`
+              : `${milestone}분 후 발표 예정 (중요도: 높음)`;
+
+            addNotification({ type: 'calendar', title, message });
+          }
+        });
+    };
+
+    checkEvents(); // 즉시 1회 실행
+    const id = setInterval(checkEvents, 30_000); // 30초마다 체크 (1분 알림 놓치지 않기 위해)
+    return () => clearInterval(id);
   }, [events, prefs.calendarEnabled, addNotification]);
 
   const markAllRead = useCallback(() => {
