@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* Primary brand: #2c968d (HSL 175 55% 38%) */
+  /* Bright variant:  #3dbdb3 (HSL 175 55% 48%) */
+
+  body {
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: #080c14;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    position: relative;
+  }
+
+  /* Background gradient */
+  .bg-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 75% 60%, rgba(12,30,46,0.85) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 50% at 20% 50%, rgba(44,150,141,0.10) 0%, transparent 60%),
+      linear-gradient(135deg, #080c14 0%, #0b1720 50%, #080f1a 100%);
+  }
+
+  /* Top accent line — brand green */
+  .top-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2c968d 0%, #3dbdb3 45%, rgba(44,150,141,0.15) 100%);
+  }
+
+  /* Subtle grid lines */
+  .grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(44,150,141,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(44,150,141,0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Left content */
+  .content {
+    position: absolute;
+    left: 80px;
+    top: 0;
+    bottom: 0;
+    width: 520px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Icon */
+  .icon-wrap {
+    width: 76px;
+    height: 76px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #0f2535, #162d40);
+    border: 1.5px solid rgba(44,150,141,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32px;
+    box-shadow: 0 0 28px rgba(44,150,141,0.18);
+  }
+
+  .icon-wrap svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Title: LAP in white, MERINI in brand green */
+  .title {
+    font-size: 66px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .title .brand {
+    color: #2c968d;
+  }
+
+  /* Korean subtitle */
+  .subtitle-kr {
+    font-size: 26px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.40);
+    letter-spacing: 0.5px;
+    margin-bottom: 28px;
+  }
+
+  /* Divider */
+  .divider {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, #2c968d, transparent);
+    margin-bottom: 24px;
+  }
+
+  /* Description */
+  .desc {
+    font-size: 20px;
+    color: rgba(255,255,255,0.50);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+  }
+
+  /* Right chart area */
+  .chart-area {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* URL bottom right */
+  .url {
+    position: absolute;
+    bottom: 36px;
+    right: 56px;
+    font-size: 15px;
+    color: rgba(255,255,255,0.22);
+    letter-spacing: 0.5px;
+  }
+
+  /* LIVE badge */
+  .badge {
+    position: absolute;
+    bottom: 36px;
+    left: 80px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(44,150,141,0.12);
+    border: 1px solid rgba(44,150,141,0.35);
+    border-radius: 20px;
+    padding: 6px 14px;
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2c968d;
+  }
+
+  .badge-text {
+    font-size: 13px;
+    color: #2c968d;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div class="grid-lines"></div>
+  <div class="top-line"></div>
+
+  <!-- Left content -->
+  <div class="content">
+    <div class="icon-wrap">
+      <!-- M-arrow icon: same design as app icon, scaled to 44x44 viewBox -->
+      <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="ogHaloG" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="11"/>
+          </filter>
+          <filter id="ogHaloR" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="10"/>
+          </filter>
+          <filter id="ogSharpG" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="3" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="ogSharpR" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Green line halos -->
+        <g filter="url(#ogHaloG)" opacity="0.70">
+          <line x1="70" y1="360" x2="105" y2="50" stroke="#3dbdb3" stroke-width="20" stroke-linecap="round"/>
+          <line x1="200" y1="248" x2="295" y2="50" stroke="#3dbdb3" stroke-width="20" stroke-linecap="round"/>
+        </g>
+        <!-- Red line halos -->
+        <g filter="url(#ogHaloR)" opacity="0.70">
+          <line x1="105" y1="50" x2="200" y2="248" stroke="#c07070" stroke-width="20" stroke-linecap="round"/>
+          <line x1="295" y1="50" x2="330" y2="360" stroke="#c07070" stroke-width="20" stroke-linecap="round"/>
+        </g>
+        <!-- Green arrowhead halos -->
+        <g filter="url(#ogHaloG)" opacity="0.70">
+          <polygon points="105,50 63,98 103,68 135,106" fill="#3dbdb3"/>
+          <polygon points="295,50 240,81 287,66 304,113" fill="#3dbdb3"/>
+        </g>
+        <!-- Red arrowhead halos -->
+        <g filter="url(#ogHaloR)" opacity="0.70">
+          <polygon points="200,248 209,186 192,232 145,217" fill="#c07070"/>
+          <polygon points="330,360 360,304 328,342 289,312" fill="#c07070"/>
+        </g>
+        <!-- Green lines sharp -->
+        <g filter="url(#ogSharpG)">
+          <line x1="70" y1="360" x2="105" y2="50" stroke="#2c968d" stroke-width="14" stroke-linecap="round"/>
+          <line x1="200" y1="248" x2="295" y2="50" stroke="#2c968d" stroke-width="14" stroke-linecap="round"/>
+        </g>
+        <!-- Red lines sharp -->
+        <g filter="url(#ogSharpR)">
+          <line x1="105" y1="50" x2="200" y2="248" stroke="#a05555" stroke-width="14" stroke-linecap="round"/>
+          <line x1="295" y1="50" x2="330" y2="360" stroke="#a05555" stroke-width="14" stroke-linecap="round"/>
+        </g>
+        <!-- Green arrowheads sharp (cover red lines) -->
+        <g filter="url(#ogSharpG)">
+          <polygon points="105,50 63,98 103,68 135,106" fill="#2c968d" stroke="#3dbdb3" stroke-width="2.5" stroke-linejoin="round"/>
+          <polygon points="295,50 240,81 287,66 304,113" fill="#2c968d" stroke="#3dbdb3" stroke-width="2.5" stroke-linejoin="round"/>
+        </g>
+        <!-- Red arrowheads sharp -->
+        <g filter="url(#ogSharpR)">
+          <polygon points="200,248 209,186 192,232 145,217" fill="#a05555" stroke="#c07070" stroke-width="2.5" stroke-linejoin="round"/>
+          <polygon points="330,360 360,304 328,342 289,312" fill="#a05555" stroke="#c07070" stroke-width="2.5" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="title">LAP <span class="brand">MERINI</span></div>
+    <div class="subtitle-kr">랩메린이</div>
+    <div class="divider"></div>
+    <div class="desc">실시간 해외선물 경제지표 대시보드<br>나스닥 · S&P500 · 골드 · 오일 · 환율</div>
+  </div>
+
+  <!-- Right chart -->
+  <div class="chart-area">
+    <svg class="chart-svg" viewBox="0 0 560 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Main line gradient: dark brand green → brand green -->
+        <linearGradient id="lineGrad1" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(44,150,141,0)"/>
+          <stop offset="25%" stop-color="#1d6b65"/>
+          <stop offset="100%" stop-color="#2c968d"/>
+        </linearGradient>
+        <!-- Area fill -->
+        <linearGradient id="areaGrad1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(44,150,141,0.20)"/>
+          <stop offset="100%" stop-color="rgba(44,150,141,0)"/>
+        </linearGradient>
+        <!-- Secondary faint line -->
+        <linearGradient id="lineGrad2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(44,150,141,0)"/>
+          <stop offset="50%" stop-color="rgba(44,150,141,0.25)"/>
+          <stop offset="100%" stop-color="rgba(44,150,141,0.08)"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <filter id="glow2">
+          <feGaussianBlur stdDeviation="7" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background secondary chart (faint) -->
+      <path d="M40 480 C80 460, 120 490, 160 450 C200 410, 240 430, 280 400 C320 370, 360 390, 400 360 C440 330, 480 310, 520 280"
+            stroke="url(#lineGrad2)" stroke-width="1.5" fill="none"/>
+
+      <!-- Area fill under main chart -->
+      <path d="M60 520 C100 500, 140 470, 180 440 C220 410, 260 430, 300 390 C340 350, 380 320, 410 270 C440 220, 470 190, 500 155 L500 580 L60 580 Z"
+            fill="url(#areaGrad1)"/>
+
+      <!-- Main chart line — brand green glow -->
+      <path d="M60 520 C100 500, 140 470, 180 440 C220 410, 260 430, 300 390 C340 350, 380 320, 410 270 C440 220, 470 190, 500 155"
+            stroke="url(#lineGrad1)" stroke-width="3.5" fill="none" filter="url(#glow2)" stroke-linecap="round"/>
+
+      <!-- Arrow at end -->
+      <path d="M486 172 L500 155 L514 172" stroke="#2c968d" stroke-width="3.5" fill="none"
+            stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+      <!-- Data points — brand green -->
+      <circle cx="180" cy="440" r="4" fill="#2c968d" filter="url(#glow)"/>
+      <circle cx="300" cy="390" r="4" fill="#2c968d" filter="url(#glow)"/>
+      <circle cx="410" cy="270" r="5.5" fill="#2c968d" filter="url(#glow2)"/>
+      <circle cx="500" cy="155" r="7" fill="#2c968d" filter="url(#glow2)"/>
+
+      <!-- Vertical dashed line -->
+      <line x1="500" y1="165" x2="500" y2="580" stroke="rgba(44,150,141,0.12)" stroke-width="1" stroke-dasharray="4 4"/>
+
+      <!-- Horizontal axis -->
+      <line x1="40" y1="580" x2="550" y2="580" stroke="rgba(44,150,141,0.18)" stroke-width="1"/>
+      <line x1="180" y1="578" x2="180" y2="584" stroke="rgba(44,150,141,0.25)" stroke-width="1"/>
+      <line x1="300" y1="578" x2="300" y2="584" stroke="rgba(44,150,141,0.25)" stroke-width="1"/>
+      <line x1="410" y1="578" x2="410" y2="584" stroke="rgba(44,150,141,0.25)" stroke-width="1"/>
+      <line x1="500" y1="578" x2="500" y2="584" stroke="rgba(44,150,141,0.25)" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <!-- LIVE badge -->
+  <div class="badge">
+    <div class="badge-dot"></div>
+    <div class="badge-text">LIVE</div>
+  </div>
+
+  <!-- URL -->
+  <div class="url">lab.merini.com</div>
+</body>
+</html>
