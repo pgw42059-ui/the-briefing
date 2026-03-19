@@ -4,13 +4,17 @@
  * 4개 탭(시세·분석·캘린더·계산기)과 테마 토글, 로그인 버튼을 포함.
  * Index.tsx / CalendarPage / CalculatorPage 에서 공통으로 사용.
  */
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, LogIn, User, LogOut, TrendingUp, Brain, Calendar, Calculator, ExternalLink } from 'lucide-react';
+import { Sun, Moon, LogIn, User, LogOut, TrendingUp, Brain, Calendar, Calculator, ExternalLink, Bell } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/use-auth';
+import { useNotifications } from '@/hooks/use-notifications';
+
+const NotificationBell = lazy(() => import('@/components/NotificationBell').then(m => ({ default: m.NotificationBell })));
 
 type TabValue = 'quotes' | 'analysis' | 'calendar' | 'calculator';
 
@@ -29,6 +33,12 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const { user, displayName, signOut } = useAuth();
+  const {
+    notifications, unreadCount, prefs: notifPrefs,
+    updateNotifPrefs, requestBrowserPermission,
+    markAllRead, markOneRead, deleteOne, clearNotifications,
+    priceAlerts, deletePriceAlert, clearTriggeredAlerts,
+  } = useNotifications(undefined, [], []);
 
   return (
     <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border/40">
@@ -90,6 +100,10 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
 
         {/* 우측 액션 버튼 */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* 날짜 */}
+          <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline px-1">
+            {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+          </span>
           <a
             href="https://merini.com"
             target="_blank"
@@ -100,6 +114,27 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
             <ExternalLink className="w-3 h-3" aria-hidden="true" />
             merini.com
           </a>
+          {/* 알림벨 */}
+          <Suspense fallback={
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" aria-label="알림">
+              <Bell className="w-4 h-4" />
+            </Button>
+          }>
+            <NotificationBell
+              notifications={notifications}
+              unreadCount={unreadCount}
+              prefs={notifPrefs}
+              onUpdatePrefs={updateNotifPrefs}
+              onRequestBrowserPermission={requestBrowserPermission}
+              onMarkAllRead={markAllRead}
+              onMarkOneRead={markOneRead}
+              onDeleteOne={deleteOne}
+              onClearAll={clearNotifications}
+              priceAlerts={priceAlerts}
+              onDeletePriceAlert={deletePriceAlert}
+              onClearTriggeredAlerts={clearTriggeredAlerts}
+            />
+          </Suspense>
           <Button
             variant="ghost"
             size="icon"
