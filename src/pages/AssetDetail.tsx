@@ -328,7 +328,7 @@ const AssetDetail = () => {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <div className="text-right">
-              <p className="text-lg sm:text-2xl font-extrabold font-mono">
+              <p className="text-base sm:text-2xl font-extrabold font-mono">
                 {quote.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
               <div className={`inline-flex items-center gap-1 text-xs sm:text-sm font-bold px-2 py-0.5 rounded-lg ${

@@ -62,28 +62,28 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              시세
+              <span className="hidden sm:inline">시세</span>
             </TabsTrigger>
             <TabsTrigger
               value="analysis"
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              분석
+              <span className="hidden sm:inline">분석</span>
             </TabsTrigger>
             <TabsTrigger
               value="calendar"
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              캘린더
+              <span className="hidden sm:inline">캘린더</span>
             </TabsTrigger>
             <TabsTrigger
               value="calculator"
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              계산기
+              <span className="hidden sm:inline">계산기</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>

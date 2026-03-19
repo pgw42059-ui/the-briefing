@@ -1,17 +1,17 @@
 import { useMemo, useState, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { InstallBanner } from '@/components/InstallBanner';
 import { Footer } from '@/components/Footer';
 
 const CompactQuoteList = lazy(() => import('@/components/CompactQuoteList').then(m => ({ default: m.CompactQuoteList })));
-const PriceCard = lazy(() => import('@/components/PriceCard').then(m => ({ default: m.PriceCard })));
 const SentimentGauge = lazy(() => import('@/components/SentimentGauge').then(m => ({ default: m.SentimentGauge })));
 const MarketSummary = lazy(() => import('@/components/MarketSummary').then(m => ({ default: m.MarketSummary })));
 const NotificationBell = lazy(() => import('@/components/NotificationBell').then(m => ({ default: m.NotificationBell })));
 const FearGreedGauge = lazy(() => import('@/components/FearGreedGauge').then(m => ({ default: m.FearGreedGauge })));
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -34,13 +34,23 @@ const FX_SYMBOLS = ['USDKRW', 'DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'US
 const ALL_SYMBOLS = [...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS, ...FX_SYMBOLS];
 
 function SignalGrid({ items }: { items: ReturnType<typeof computeAllSignals> }) {
+  // 3열 그리드 기준 마지막 행에 아이템이 1개뿐이면 중앙 정렬
+  const orphanLg = items.length % 3 === 1;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-      {items.map((s) => (
-        <Suspense key={s.symbol} fallback={<Skeleton className="h-[120px] rounded-xl" />}>
-          <SentimentGauge signal={s} />
-        </Suspense>
-      ))}
+      {items.map((s, i) => {
+        const isLast = i === items.length - 1;
+        return (
+          <Suspense
+            key={s.symbol}
+            fallback={<Skeleton className={`h-[120px] rounded-xl${isLast && orphanLg ? ' lg:col-start-2' : ''}`} />}
+          >
+            <div className={isLast && orphanLg ? 'lg:col-start-2' : ''}>
+              <SentimentGauge signal={s} />
+            </div>
+          </Suspense>
+        );
+      })}
     </div>
   );
 }
@@ -68,7 +78,12 @@ const Index = () => {
       fxQuotes: FX_SYMBOLS.flatMap(s => bySymbol.has(s) ? [bySymbol.get(s)!] : []),
     };
   }, [quotes]);
-  const watchlistQuotes = useMemo(() => quotes?.filter(q => watchlistSymbols.includes(q.symbol)) ?? [], [quotes, watchlistSymbols]);
+
+  const watchlistQuotes = useMemo(
+    () => quotes?.filter(q => watchlistSymbols.includes(q.symbol)) ?? [],
+    [quotes, watchlistSymbols]
+  );
+
   const { indexSignals, commoditySignals, fxSignals } = useMemo(() => ({
     indexSignals: signals.filter(s => INDEX_SYMBOLS.includes(s.symbol)),
     commoditySignals: signals.filter(s => COMMODITY_SYMBOLS.includes(s.symbol)),
@@ -81,10 +96,18 @@ const Index = () => {
     return allEvents.filter(e => e.date === today);
   }, [allEvents]);
 
-  // isPlaceholderData일 때는 mock 데이터 → 실제 데이터 전환 시 가짜 알림 방지
-  const { notifications, unreadCount, prefs: notifPrefs, updatePrefs: updateNotifPrefs, markAllRead, markOneRead, deleteOne, clearAll: clearNotifications, requestBrowserPermission, priceAlerts, deletePriceAlert, clearTriggeredAlerts } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
+  const {
+    notifications, unreadCount,
+    prefs: notifPrefs, updatePrefs: updateNotifPrefs,
+    markAllRead, markOneRead, deleteOne, clearAll: clearNotifications,
+    requestBrowserPermission,
+    priceAlerts, deletePriceAlert, clearTriggeredAlerts,
+  } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
 
-  const { data: analysisItems, isLoading: analysisLoading, isError: analysisError, forceRefetch, isFetching: analysisRefreshing, clearCache } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
+  const {
+    data: analysisItems, isLoading: analysisLoading, isError: analysisError,
+    forceRefetch, isFetching: analysisRefreshing, clearCache,
+  } = useMarketAnalysis(quotes, todayEvents, cacheTtlMinutes);
 
   const handleClearCache = useCallback(async () => {
     await clearCache();
@@ -111,125 +134,191 @@ const Index = () => {
         <meta name="twitter:description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 강세/약세 시그널을 한눈에 확인하세요." />
         <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
       </Helmet>
+
       {/* Skip to main content */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg">
         메인 콘텐츠로 건너뛰기
       </a>
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border/40" role="banner">
-        {/* teal accent bar */}
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-70" />
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="relative shrink-0">
-              <img src="/logo.png" alt="랩메린이" width={36} height={36} className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl shrink-0" />
+
+      {/* Tabs 루트가 header + main을 모두 감싸 TabsList↔TabsContent 연결 */}
+      <Tabs
+        key={defaultTab}
+        defaultValue={defaultTab}
+        onValueChange={(v) => {
+          if (v === 'calendar') navigate('/calendar');
+          else if (v === 'calculator') navigate('/calculator');
+          else if (v === 'analysis') navigate('/?tab=analysis', { replace: true });
+          else navigate('/', { replace: true });
+        }}
+      >
+        {/* ── Header (AppTabNav와 동일한 1행 구조) ── */}
+        <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border/40" role="banner">
+          <div className="h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-70" />
+          <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2 sm:py-3 flex items-center gap-2 sm:gap-3">
+
+            {/* 로고 */}
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 shrink-0"
+              aria-label="홈으로"
+            >
+              <div className="relative shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="랩메린이"
+                  width={36}
+                  height={36}
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl"
+                />
+                {!isLoading && !isError && (
+                  <span
+                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse"
+                    aria-label="실시간 데이터 연결됨"
+                    role="status"
+                  />
+                )}
+              </div>
+              <div className="min-w-0 hidden lg:block">
+                <p className="text-sm font-extrabold tracking-tight leading-none">랩메린이</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">실시간 글로벌 마켓 대시보드</p>
+              </div>
+            </button>
+
+            {/* 탭바 */}
+            <TabsList className="flex-1 h-10 sm:h-11 rounded-xl bg-muted/70 border border-border/50 p-1 grid grid-cols-4 shadow-sm">
+              <TabsTrigger
+                value="quotes"
+                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
+              >
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">시세</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="analysis"
+                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
+              >
+                <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">분석</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="calendar"
+                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
+              >
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">캘린더</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="calculator"
+                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
+              >
+                <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">계산기</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* 우측 액션 버튼 */}
+            <div className="flex items-center gap-1 shrink-0">
+              {/* LIVE 배지 */}
               {!isLoading && !isError && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse" aria-label="실시간 데이터 연결됨" role="status" />
+                <div
+                  className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20"
+                  role="status"
+                  aria-label="실시간 데이터 연결됨"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+                  <span className="text-xs font-semibold text-primary">LIVE</span>
+                </div>
+              )}
+              {/* 날짜 */}
+              <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline px-1">
+                {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+              </span>
+              {/* merini.com */}
+              <a
+                href="https://merini.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
+                aria-label="메린이 메인 사이트로 이동"
+              >
+                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                merini.com
+              </a>
+              {/* 알림 */}
+              <Suspense fallback={
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" aria-label="알림">
+                  <Bell className="w-4 h-4" />
+                </Button>
+              }>
+                <NotificationBell
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  prefs={notifPrefs}
+                  onUpdatePrefs={updateNotifPrefs}
+                  onRequestBrowserPermission={requestBrowserPermission}
+                  onMarkAllRead={markAllRead}
+                  onMarkOneRead={markOneRead}
+                  onDeleteOne={deleteOne}
+                  onClearAll={clearNotifications}
+                  priceAlerts={priceAlerts}
+                  onDeletePriceAlert={deletePriceAlert}
+                  onClearTriggeredAlerts={clearTriggeredAlerts}
+                />
+              </Suspense>
+              {/* 테마 토글 */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggle}
+                className="h-8 w-8 rounded-lg"
+                aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+              >
+                {theme === 'dark'
+                  ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                }
+              </Button>
+              {/* 로그인/유저 */}
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs gap-1 px-2 border-border/60">
+                      <User className="w-3 h-3" />
+                      <span className="hidden sm:inline max-w-[60px] truncate">
+                        {displayName || user.email?.split('@')[0]}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-xl">
+                    <DropdownMenuItem className="text-sm" disabled>{user.email}</DropdownMenuItem>
+                    <DropdownMenuItem className="text-sm gap-2 text-destructive" onClick={signOut}>
+                      <LogOut className="w-3.5 h-3.5" />
+                      로그아웃
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-lg text-xs gap-1 px-2 border-border/60"
+                  onClick={() => navigate('/auth')}
+                  aria-label="로그인"
+                >
+                  <LogIn className="w-3 h-3" />
+                  <span className="hidden sm:inline">로그인</span>
+                </Button>
               )}
             </div>
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-extrabold tracking-tight leading-none">랩메린이</h1>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 leading-none truncate">실시간 글로벌 마켓 대시보드</p>
-            </div>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {!isLoading && !isError && (
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20" role="status" aria-label="실시간 데이터 연결됨">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-                <span className="text-xs font-semibold text-primary">LIVE</span>
-              </div>
-            )}
-            <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline">
-              {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-            </span>
-            {/* merini.com 연동 버튼 */}
-            <a
-              href="https://merini.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 h-7 sm:h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
-              aria-label="메린이 메인 사이트로 이동"
-            >
-              <img src="/icons/icon-home.png" alt="" className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">merini.com</span>
-            </a>
-            <Suspense fallback={<Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" aria-label="알림"><Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4" /></Button>}>
-              <NotificationBell
-                notifications={notifications}
-                unreadCount={unreadCount}
-                prefs={notifPrefs}
-                onUpdatePrefs={updateNotifPrefs}
-                onRequestBrowserPermission={requestBrowserPermission}
-                onMarkAllRead={markAllRead}
-                onMarkOneRead={markOneRead}
-                onDeleteOne={deleteOne}
-                onClearAll={clearNotifications}
-                priceAlerts={priceAlerts}
-                onDeletePriceAlert={deletePriceAlert}
-                onClearTriggeredAlerts={clearTriggeredAlerts}
-              />
-            </Suspense>
-            <Button variant="ghost" size="icon" onClick={toggle} className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}>
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            </Button>
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 sm:h-8 rounded-lg text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 border-border/60">
-                    <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    <span className="max-w-[60px] sm:max-w-[80px] truncate hidden sm:inline">{displayName || user.email?.split('@')[0]}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="rounded-xl">
-                  <DropdownMenuItem className="text-sm" disabled>
-                    {user.email}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-sm gap-2 text-destructive" onClick={signOut}>
-                    <LogOut className="w-3.5 h-3.5" />
-                    로그아웃
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button variant="outline" size="sm" className="h-7 sm:h-8 rounded-lg text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 border-border/60" onClick={() => navigate('/auth')} aria-label="로그인">
-                <LogIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="hidden sm:inline">로그인</span>
-              </Button>
-            )}
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
-        <Tabs key={defaultTab} defaultValue={defaultTab} className="w-full" onValueChange={(v) => {
-            if (v === 'calendar') navigate('/calendar');
-            else if (v === 'calculator') navigate('/calculator');
-            else if (v === 'analysis') navigate('/?tab=analysis', { replace: true });
-            else if (v === 'quotes') navigate('/', { replace: true });
-          }}>
-          {/* Main Navigation Tabs */}
-          <TabsList className="w-full h-11 sm:h-12 rounded-xl bg-muted/70 border border-border/50 p-1 mb-5 sm:mb-7 grid grid-cols-4 shadow-sm">
-            <TabsTrigger value="quotes" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              시세
-            </TabsTrigger>
-            <TabsTrigger value="analysis" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
-              <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              분석
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
-              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              캘린더
-            </TabsTrigger>
-            <TabsTrigger value="calculator" className="text-xs sm:text-sm gap-1.5 sm:gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all">
-              <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              계산기
-            </TabsTrigger>
-          </TabsList>
+        {/* ── Main content ── */}
+        <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
 
           {/* === 시세 탭 === */}
           <TabsContent value="quotes" className="mt-0 space-y-4 sm:space-y-5">
-            {/* 시세 로딩 에러 배너 */}
+            {/* 에러 배너 */}
             {isError && (
               <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-destructive/30 bg-destructive/5" role="alert">
                 <div className="flex items-center gap-2 text-destructive">
@@ -248,7 +337,7 @@ const Index = () => {
               </div>
             )}
 
-            {/* 실시간 시세 — 섹션별 컴팩트 리스트 */}
+            {/* 실시간 시세 */}
             <section aria-labelledby="quotes-heading">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <div className="flex items-center gap-2.5">
@@ -260,7 +349,7 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* 관심종목 (로그인 시) */}
+              {/* 관심종목 */}
               {hasWatchlist && (
                 <div className="rounded-xl border border-border/50 bg-card mb-3 overflow-hidden">
                   <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-border/40 bg-muted/30">
@@ -340,7 +429,6 @@ const Index = () => {
                 </div>
               </div>
             </section>
-
           </TabsContent>
 
           {/* === 분석 탭 === */}
@@ -352,7 +440,16 @@ const Index = () => {
             <div className="grid lg:grid-cols-5 gap-4 sm:gap-6">
               <div className="lg:col-span-3">
                 <Suspense fallback={<Skeleton className="h-[400px] rounded-xl" />}>
-                  <MarketSummary items={analysisItems} isLoading={analysisLoading} isError={analysisError} onRefresh={() => forceRefetch()} isRefreshing={analysisRefreshing} cacheTtlMinutes={cacheTtlMinutes} onCacheTtlChange={setCacheTtlMinutes} onClearCache={handleClearCache} />
+                  <MarketSummary
+                    items={analysisItems}
+                    isLoading={analysisLoading}
+                    isError={analysisError}
+                    onRefresh={() => forceRefetch()}
+                    isRefreshing={analysisRefreshing}
+                    cacheTtlMinutes={cacheTtlMinutes}
+                    onCacheTtlChange={setCacheTtlMinutes}
+                    onClearCache={handleClearCache}
+                  />
                 </Suspense>
               </div>
               <div className="lg:col-span-2">
@@ -395,8 +492,9 @@ const Index = () => {
             </section>
           </TabsContent>
 
-        </Tabs>
-      </main>
+        </main>
+      </Tabs>
+
       <Footer />
       <InstallBanner />
     </div>

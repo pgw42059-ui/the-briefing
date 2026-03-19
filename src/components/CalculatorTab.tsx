@@ -596,6 +596,11 @@ function PositionSizingCalculator() {
       </div>
 
       {/* 결과 */}
+      {!result && (
+        <div className="py-8 text-center text-muted-foreground">
+          <p className="text-sm">계좌 잔고와 리스크를 입력하면 결과가 표시됩니다</p>
+        </div>
+      )}
       {result ? (
         <div className="space-y-3">
           {/* 권장 계약수 — 메인 */}
@@ -764,7 +769,7 @@ function FxCalculator() {
       <div className="flex items-center gap-2">
         <div className="flex-1">
           <label className="text-[11px] text-muted-foreground font-medium block mb-1">변환 전</label>
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
             {CCY_LIST.map((c) => (
               <button
                 key={c}
@@ -792,7 +797,7 @@ function FxCalculator() {
 
         <div className="flex-1">
           <label className="text-[11px] text-muted-foreground font-medium block mb-1">변환 후</label>
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
             {CCY_LIST.map((c) => (
               <button
                 key={c}
