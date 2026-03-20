@@ -19,6 +19,7 @@ const InstallPage = lazy(() => import("./pages/InstallPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminPage = lazy(() => import("./pages/AdminPage"));
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => (
                   <Route path="/calculator" element={<CalculatorPage />} />
                   <Route path="/calendar" element={<CalendarPage />} />
                   <Route path="/asset/:symbol" element={<AssetDetail />} />
+                  <Route path="/admin" element={<AdminPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
