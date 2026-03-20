@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { usePresenceTracker } from "@/hooks/use-presence-tracker";
 
 const LazyTooltipProvider = lazy(() =>
   import("@/components/ui/tooltip").then(m => ({ default: m.TooltipProvider }))
@@ -48,6 +49,11 @@ const DeferredToasts = () => {
   );
 };
 
+function PresenceInit() {
+  usePresenceTracker();
+  return null;
+}
+
 const App = () => (
   <HelmetProvider>
   <QueryClientProvider client={queryClient}>
@@ -56,6 +62,7 @@ const App = () => (
         <LazyTooltipProvider>
           <DeferredToasts />
           <BrowserRouter>
+            <PresenceInit />
             <ErrorBoundary>
               <Suspense fallback={<div className="min-h-screen bg-background" />}>
                 <Routes>

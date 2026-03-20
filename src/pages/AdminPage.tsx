@@ -6,6 +6,7 @@ import {
   TrendingUp, ShieldAlert, Settings, LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useOnlineCount } from '@/hooks/use-online-count';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -122,16 +123,15 @@ export default function AdminPage() {
   }, [user, isAdmin, navigate]);
 
   // 실시간 갱신 시뮬레이션
-  const [cpu, setCpu]     = useState(34);
-  const [ram, setRam]     = useState(61);
-  const [online, setOnline] = useState(127);
-  const [tick, setTick]   = useState(0);
+  const online = useOnlineCount();
+  const [cpu, setCpu] = useState(34);
+  const [ram, setRam] = useState(61);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setCpu(v  => Math.max(10, Math.min(95, v + (Math.random() - 0.5) * 8)));
-      setRam(v  => Math.max(40, Math.min(90, v + (Math.random() - 0.5) * 3)));
-      setOnline(v => Math.max(80, Math.min(200, v + Math.floor((Math.random() - 0.5) * 5))));
+      setCpu(v => Math.max(10, Math.min(95, v + (Math.random() - 0.5) * 8)));
+      setRam(v => Math.max(40, Math.min(90, v + (Math.random() - 0.5) * 3)));
       setTick(t => t + 1);
     }, 3000);
     return () => clearInterval(id);
