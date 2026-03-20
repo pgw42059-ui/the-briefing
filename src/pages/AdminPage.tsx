@@ -114,6 +114,13 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
+  // 어드민 접근 제한
+  const isAdmin = user?.user_metadata?.role === 'admin';
+  useEffect(() => {
+    if (user === null) { navigate('/auth', { replace: true }); return; }
+    if (user && !isAdmin) { navigate('/', { replace: true }); }
+  }, [user, isAdmin, navigate]);
+
   // 실시간 갱신 시뮬레이션
   const [cpu, setCpu]     = useState(34);
   const [ram, setRam]     = useState(61);
