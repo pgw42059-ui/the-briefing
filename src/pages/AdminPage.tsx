@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   Server, Wifi, WifiOff, Users, AlertTriangle, Database,
   Activity, RefreshCw, CheckCircle2, XCircle, Clock,
-  ShieldAlert, Settings, LogOut, MemoryStick,
+  ShieldAlert, Settings, LogOut, MemoryStick, Star,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useOnlineCount } from '@/hooks/use-online-count';
 import { useAdminStats } from '@/hooks/use-admin-stats';
 import { useMarketQuotes } from '@/hooks/use-market-quotes';
 import { computeAllSignals } from '@/lib/compute-signals';
+import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ import { Button } from '@/components/ui/button';
 /* ── 시그널 스냅샷 타입 ──────────────────────────────── */
 interface SignalSnap { time: string; bullish: number; bearish: number; neutral: number; }
 
-/* ── SVG 바 차트 ─────────────────────────────────────── */
+/* ── SVG 바 차트 (시그널) ────────────────────────────── */
 function SignalBarChart({ data }: { data: SignalSnap[] }) {
   if (!data.length) return <div className="h-40 flex items-center justify-center text-[12px] text-muted-foreground">데이터 수집 중…</div>;
   const W = 520, H = 160, PL = 24, PR = 8, PT = 8, PB = 28;
@@ -57,6 +58,46 @@ function SignalBarChart({ data }: { data: SignalSnap[] }) {
   );
 }
 
+/* ── SVG 미니 차트 (7일 가입자) ─────────────────────── */
+function SignupMiniChart({ data }: { data: { date: string; count: number }[] }) {
+  if (!data.length) return null;
+  const W = 260, H = 64, PL = 4, PR = 4, PT = 4, PB = 20;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const maxVal = Math.max(...data.map(d => d.count), 1);
+  const barW = Math.max(4, Math.floor(chartW / data.length) - 3);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+      {data.map((d, i) => {
+        const cx = PL + (i + 0.5) * (chartW / data.length);
+        const bH = Math.max((d.count / maxVal) * chartH, d.count > 0 ? 2 : 0);
+        return (
+          <g key={i}>
+            <rect
+              x={cx - barW / 2}
+              y={PT + chartH - bH}
+              width={barW}
+              height={bH}
+              rx="2"
+              fill="hsl(var(--primary))"
+              opacity={d.count === 0 ? 0.2 : 0.8}
+            />
+            <text x={cx} y={H - 5} textAnchor="middle" fontSize="7" fill="hsl(var(--muted-foreground))">
+              {d.date.replace('월 ', '/').replace('일', '')}
+            </text>
+            {d.count > 0 && (
+              <text x={cx} y={PT + chartH - bH - 2} textAnchor="middle" fontSize="7" fill="hsl(var(--primary))">
+                {d.count}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 /* ── 서브 컴포넌트 ───────────────────────────────────── */
 function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
   return (
@@ -65,6 +106,19 @@ function StatusBadge({ ok, label }: { ok: boolean; label: string }) {
     }`}>
       {ok ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
       {label}
+    </span>
+  );
+}
+
+function LevelBadge({ level, count }: { level: 'ERROR' | 'WARN' | 'INFO'; count: number }) {
+  const cfg = {
+    ERROR: 'bg-destructive/15 text-destructive',
+    WARN:  'bg-yellow-500/15 text-yellow-500',
+    INFO:  'bg-primary/15 text-primary',
+  }[level];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg}`}>
+      {level} {count}
     </span>
   );
 }
@@ -108,7 +162,11 @@ export default function AdminPage() {
 
   /* ── 실시간 데이터 훅 ── */
   const online = useOnlineCount();
-  const { newUsersToday, newUsersWeek, logs, logsLoading } = useAdminStats();
+  const {
+    totalUsers, newUsersToday, newUsersWeek,
+    signupsByDay, topWatchlist, logLevelCounts,
+    logs, logsLoading,
+  } = useAdminStats();
   const { data: quotes, isError: quotesError, isLoading: quotesLoading, dataUpdatedAt } = useMarketQuotes();
   const heap = useJsHeap();
 
@@ -229,7 +287,6 @@ export default function AdminPage() {
               </div>
             </div>
             <SignalBarChart data={signalHistory} />
-            {/* 현재 시그널 요약 */}
             {signalHistory.length > 0 && (() => {
               const latest = signalHistory[signalHistory.length - 1];
               return (
@@ -285,29 +342,51 @@ export default function AdminPage() {
         {/* ── 사이드 (우) ────────────────────────────── */}
         <div className="flex flex-col gap-4">
 
-          {/* 신규 사용자 */}
+          {/* 사용자 분석 */}
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-primary" />
-              <h2 className="font-semibold text-sm">신규 사용자</h2>
+              <h2 className="font-semibold text-sm">사용자 분석</h2>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-primary/10 p-3 text-center">
-                <p className="text-[10px] text-muted-foreground mb-1">오늘</p>
-                <p className="text-xl font-bold text-primary">+{newUsersToday}</p>
+
+            {/* 총 가입자 + 오늘 + 이번 주 */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="rounded-xl bg-muted/40 p-2.5 text-center">
+                <p className="text-[9px] text-muted-foreground mb-0.5">총 가입자</p>
+                <p className="text-lg font-bold">{totalUsers.toLocaleString()}</p>
               </div>
-              <div className="rounded-xl bg-muted/50 p-3 text-center">
-                <p className="text-[10px] text-muted-foreground mb-1">이번 주</p>
-                <p className="text-xl font-bold">+{newUsersWeek}</p>
+              <div className="rounded-xl bg-primary/10 p-2.5 text-center">
+                <p className="text-[9px] text-muted-foreground mb-0.5">오늘</p>
+                <p className="text-lg font-bold text-primary">+{newUsersToday}</p>
+              </div>
+              <div className="rounded-xl bg-muted/40 p-2.5 text-center">
+                <p className="text-[9px] text-muted-foreground mb-0.5">이번 주</p>
+                <p className="text-lg font-bold">+{newUsersWeek}</p>
               </div>
             </div>
+
+            {/* 7일 가입자 미니 차트 */}
+            {signupsByDay.length > 0 && (
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-1.5">최근 7일 신규 가입</p>
+                <SignupMiniChart data={signupsByDay} />
+              </div>
+            )}
           </Card>
 
           {/* 에러 로그 (실제 admin_logs 테이블) */}
           <Card className="p-4 flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="w-4 h-4 text-yellow-500" />
-              <h2 className="font-semibold text-sm">시스템 로그</h2>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                <h2 className="font-semibold text-sm">시스템 로그</h2>
+              </div>
+              {/* 로그 레벨별 카운트 */}
+              <div className="flex items-center gap-1">
+                {logLevelCounts.ERROR > 0 && <LevelBadge level="ERROR" count={logLevelCounts.ERROR} />}
+                {logLevelCounts.WARN  > 0 && <LevelBadge level="WARN"  count={logLevelCounts.WARN} />}
+                {logLevelCounts.INFO  > 0 && <LevelBadge level="INFO"  count={logLevelCounts.INFO} />}
+              </div>
             </div>
             {logsLoading ? (
               <p className="text-[11px] text-muted-foreground">로딩 중…</p>
@@ -334,15 +413,46 @@ export default function AdminPage() {
       </div>
 
       {/* ── 하단 섹션 ─────────────────────────────────── */}
-      <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 pb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 pb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
 
-        {/* DB 현황 (실제 테이블 row 수) */}
+        {/* DB 현황 */}
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <Database className="w-4 h-4 text-primary" />
             <h2 className="font-semibold text-sm">데이터베이스 현황</h2>
           </div>
           <DbStats />
+        </Card>
+
+        {/* 인기 관심종목 TOP 5 */}
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Star className="w-4 h-4 text-primary" />
+            <h2 className="font-semibold text-sm">인기 관심종목 TOP 5</h2>
+          </div>
+          {topWatchlist.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">관심종목 데이터 없음</p>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {topWatchlist.map((item, idx) => {
+                const maxCount = topWatchlist[0].count;
+                const pct = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+                return (
+                  <div key={item.symbol} className="flex items-center gap-2.5">
+                    <span className="text-[10px] font-bold text-muted-foreground w-4 shrink-0">{idx + 1}</span>
+                    <span className="text-xs font-semibold font-mono w-16 shrink-0">{item.symbol}</span>
+                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all duration-700"
+                        style={{ width: `${pct}%`, opacity: 0.7 + 0.3 * (1 - idx / 5) }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground w-8 text-right shrink-0">{item.count}명</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
 
         {/* 시스템 설정 */}
@@ -376,8 +486,6 @@ export default function AdminPage() {
 }
 
 /* ── DB 현황 컴포넌트 ────────────────────────────────── */
-import { supabase } from '@/integrations/supabase/client';
-
 function DbStats() {
   const [rows, setRows] = useState<{ name: string; count: number | null }[]>([]);
 
