@@ -39,21 +39,6 @@ function GaugeArc({ score }: { score: number }) {
   const bgEnd   = pt(100, R);
   const bgPath  = `M ${bgEnd.x} ${bgEnd.y} A ${R} ${R} 0 0 0 ${bgStart.x} ${bgStart.y}`;
 
-  // 구간별 채색 호
-  const zoneArcs: string[] = [];
-  let prevBound = 0;
-  for (const z of ZONES) {
-    const s1 = pt(prevBound, R);
-    const s2 = pt(z.max,    R);
-    const large = (z.max - prevBound) > 50 ? 1 : 0;
-    // 점수가 오른쪽(0)에서 왼쪽(100)으로 → sweep=0
-    zoneArcs.push(
-      `<path d="M ${s2.x} ${s2.y} A ${R} ${R} 0 ${large} 0 ${s1.x} ${s1.y}"` +
-      ` fill="none" stroke="${z.color}" stroke-width="13" stroke-linecap="butt" opacity="0.28"/>`
-    );
-    prevBound = z.max;
-  }
-
   // 점수 호 (0 → score)
   const scoreEnd   = pt(score, R);
   const scoreLarge = score > 50 ? 1 : 0;
@@ -250,10 +235,10 @@ export function FearGreedGauge() {
 
       {/* 설명 문장 */}
       <p className="text-[11px] text-center text-muted-foreground mb-4 leading-relaxed">
-        {zone.label === '극도의 공포' && '투자자들이 매우 두려워하고 있습니다.\n과매도 가능성에 주목하세요.'}
-        {zone.label === '공포'       && '시장에 불안 심리가 팽배합니다.'}
-        {zone.label === '중립'       && '시장 심리가 균형 상태입니다.'}
-        {zone.label === '탐욕'       && '투자자들이 다소 낙관적입니다.'}
+        {zone.label === '극도의 공포' && <>투자자들이 매우 두려워하고 있습니다.<br />과매도 가능성에 주목하세요.</>}
+        {zone.label === '공포'        && '시장에 불안 심리가 팽배합니다.'}
+        {zone.label === '중립'        && '시장 심리가 균형 상태입니다.'}
+        {zone.label === '탐욕'        && '투자자들이 다소 낙관적입니다.'}
         {zone.label === '극도의 탐욕' && '과도한 낙관으로 과열 위험이 있습니다.'}
       </p>
 

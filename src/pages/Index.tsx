@@ -1,26 +1,24 @@
 import { useMemo, useState, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sun, Moon, BarChart3, Gem, DollarSign, Star, LogIn, User, LogOut, Bell, TrendingUp, Calendar, Brain, Calculator, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { BarChart3, Gem, DollarSign, Star, AlertCircle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { InstallBanner } from '@/components/InstallBanner';
 import { Footer } from '@/components/Footer';
+import { AppTabNav } from '@/components/AppTabNav';
 
 const CompactQuoteList = lazy(() => import('@/components/CompactQuoteList').then(m => ({ default: m.CompactQuoteList })));
 const SentimentGauge = lazy(() => import('@/components/SentimentGauge').then(m => ({ default: m.SentimentGauge })));
 const MarketSummary = lazy(() => import('@/components/MarketSummary').then(m => ({ default: m.MarketSummary })));
-const NotificationBell = lazy(() => import('@/components/NotificationBell').then(m => ({ default: m.NotificationBell })));
 const FearGreedGauge = lazy(() => import('@/components/FearGreedGauge').then(m => ({ default: m.FearGreedGauge })));
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useMarketQuotes } from '@/hooks/use-market-quotes';
 import { useEconomicEvents } from '@/hooks/use-economic-events';
 import { useMarketAnalysis } from '@/hooks/use-market-analysis';
 import { useSparklines } from '@/hooks/use-sparklines';
-import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useWatchlist } from '@/hooks/use-watchlist';
 import { computeAllSignals, computeCompositeScore } from '@/lib/compute-signals';
@@ -56,18 +54,16 @@ function SignalGrid({ items }: { items: ReturnType<typeof computeAllSignals> }) 
 }
 
 const Index = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get('tab') ?? 'quotes';
+  const activeTab = (searchParams.get('tab') ?? 'quotes') as 'quotes' | 'analysis';
   const { data: quotes, isLoading, isError, isPlaceholderData, refetch } = useMarketQuotes();
   const { data: allEvents } = useEconomicEvents();
   const { data: fearGreed } = useFearGreed();
   const signals = useMemo(() => quotes ? computeAllSignals(quotes) : [], [quotes]);
   const composite = useMemo(() => quotes ? computeCompositeScore(quotes, fearGreed ?? null) : null, [quotes, fearGreed]);
-  const { theme, toggle } = useTheme();
   const { data: sparklines } = useSparklines(ALL_SYMBOLS);
   const [cacheTtlMinutes, setCacheTtlMinutes] = useState(60);
-  const { user, displayName, signOut } = useAuth();
+  const { user } = useAuth();
   const { symbols: watchlistSymbols, isWatched, toggle: toggleWatchlist } = useWatchlist();
 
   const { indexQuotes, commodityQuotes, fxQuotes } = useMemo(() => {
@@ -98,8 +94,8 @@ const Index = () => {
 
   const {
     notifications, unreadCount,
-    prefs: notifPrefs, updatePrefs: updateNotifPrefs,
-    markAllRead, markOneRead, deleteOne, clearAll: clearNotifications,
+    prefs: notifPrefs, updatePrefs,
+    markAllRead, markOneRead, deleteOne, clearAll,
     requestBrowserPermission,
     priceAlerts, deletePriceAlert, clearTriggeredAlerts,
   } = useNotifications(isPlaceholderData ? undefined : quotes, todayEvents, watchlistSymbols);
@@ -140,184 +136,23 @@ const Index = () => {
         메인 콘텐츠로 건너뛰기
       </a>
 
-      {/* Tabs 루트가 header + main을 모두 감싸 TabsList↔TabsContent 연결 */}
-      <Tabs
-        key={defaultTab}
-        defaultValue={defaultTab}
-        onValueChange={(v) => {
-          if (v === 'calendar') navigate('/calendar');
-          else if (v === 'calculator') navigate('/calculator');
-          else if (v === 'analysis') navigate('/?tab=analysis', { replace: true });
-          else navigate('/', { replace: true });
+      <AppTabNav
+        activeTab={activeTab}
+        isLive={!isLoading && !isError}
+        notificationHandlers={{
+          notifications, unreadCount,
+          prefs: notifPrefs, updatePrefs,
+          requestBrowserPermission,
+          markAllRead, markOneRead, deleteOne, clearAll,
+          priceAlerts, deletePriceAlert, clearTriggeredAlerts,
         }}
-      >
-        {/* ── Header (AppTabNav와 동일한 1행 구조) ── */}
-        <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border/40" role="banner">
-          <div className="h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent opacity-70" />
-          <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2 sm:py-3 flex items-center gap-2 sm:gap-3">
+      />
 
-            {/* 로고 */}
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 shrink-0"
-              aria-label="홈으로"
-            >
-              <div className="relative shrink-0">
-                <img
-                  src="/logo.png"
-                  alt="랩메린이"
-                  width={36}
-                  height={36}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl"
-                />
-                {!isLoading && !isError && (
-                  <span
-                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary border-2 border-background animate-pulse"
-                    aria-label="실시간 데이터 연결됨"
-                    role="status"
-                  />
-                )}
-              </div>
-              <div className="min-w-0 hidden lg:block">
-                <p className="text-sm font-extrabold tracking-tight leading-none">랩메린이</p>
-                <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">실시간 글로벌 마켓 대시보드</p>
-              </div>
-            </button>
+      {/* ── Main content ── */}
+      <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
 
-            {/* 탭바 */}
-            <TabsList className="flex-1 h-10 sm:h-11 rounded-xl bg-muted/70 border border-border/50 p-1 grid grid-cols-4 shadow-sm">
-              <TabsTrigger
-                value="quotes"
-                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
-              >
-                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">시세</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="analysis"
-                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
-              >
-                <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">분석</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="calendar"
-                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
-              >
-                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">캘린더</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="calculator"
-                className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
-              >
-                <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">계산기</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* 우측 액션 버튼 */}
-            <div className="flex items-center gap-1 shrink-0">
-              {/* LIVE 배지 */}
-              {!isLoading && !isError && (
-                <div
-                  className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20"
-                  role="status"
-                  aria-label="실시간 데이터 연결됨"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-                  <span className="text-xs font-semibold text-primary">LIVE</span>
-                </div>
-              )}
-              {/* 날짜 */}
-              <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline px-1">
-                {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-              </span>
-              {/* merini.com */}
-              <a
-                href="https://merini.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11px] font-semibold bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
-                aria-label="메린이 메인 사이트로 이동"
-              >
-                <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                merini.com
-              </a>
-              {/* 알림 */}
-              <Suspense fallback={
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" aria-label="알림">
-                  <Bell className="w-4 h-4" />
-                </Button>
-              }>
-                <NotificationBell
-                  notifications={notifications}
-                  unreadCount={unreadCount}
-                  prefs={notifPrefs}
-                  onUpdatePrefs={updateNotifPrefs}
-                  onRequestBrowserPermission={requestBrowserPermission}
-                  onMarkAllRead={markAllRead}
-                  onMarkOneRead={markOneRead}
-                  onDeleteOne={deleteOne}
-                  onClearAll={clearNotifications}
-                  priceAlerts={priceAlerts}
-                  onDeletePriceAlert={deletePriceAlert}
-                  onClearTriggeredAlerts={clearTriggeredAlerts}
-                />
-              </Suspense>
-              {/* 테마 토글 */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggle}
-                className="h-8 w-8 rounded-lg"
-                aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              >
-                {theme === 'dark'
-                  ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                }
-              </Button>
-              {/* 로그인/유저 */}
-              {user ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs gap-1 px-2 border-border/60">
-                      <User className="w-3 h-3" />
-                      <span className="hidden sm:inline max-w-[60px] truncate">
-                        {displayName || user.email?.split('@')[0]}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-xl">
-                    <DropdownMenuItem className="text-sm" disabled>{user.email}</DropdownMenuItem>
-                    <DropdownMenuItem className="text-sm gap-2 text-destructive" onClick={signOut}>
-                      <LogOut className="w-3.5 h-3.5" />
-                      로그아웃
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-lg text-xs gap-1 px-2 border-border/60"
-                  onClick={() => navigate('/auth')}
-                  aria-label="로그인"
-                >
-                  <LogIn className="w-3 h-3" />
-                  <span className="hidden sm:inline">로그인</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </header>
-
-        {/* ── Main content ── */}
-        <main id="main-content" className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6" role="main">
-
-          {/* === 시세 탭 === */}
-          <TabsContent value="quotes" className="mt-0 space-y-4 sm:space-y-5">
+        {/* === 시세 탭 === */}
+        {activeTab === 'quotes' && <div className="space-y-4 sm:space-y-5">
             {/* 에러 배너 */}
             {isError && (
               <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-destructive/30 bg-destructive/5" role="alert">
@@ -429,10 +264,10 @@ const Index = () => {
                 </div>
               </div>
             </section>
-          </TabsContent>
+        </div>}
 
-          {/* === 분석 탭 === */}
-          <TabsContent value="analysis" className="mt-0 space-y-5 sm:space-y-6">
+        {/* === 분석 탭 === */}
+        {activeTab === 'analysis' && <div className="space-y-5 sm:space-y-6">
             {/* 1. 시장 종합 심리 */}
             {composite && <MarketCompositeBar composite={composite} />}
 
@@ -490,10 +325,9 @@ const Index = () => {
                 </Suspense>
               </Tabs>
             </section>
-          </TabsContent>
+        </div>}
 
-        </main>
-      </Tabs>
+      </main>
 
       <Footer />
       <InstallBanner />

@@ -70,7 +70,7 @@ function analyzeVolatility(quote: FuturesQuote): FactorResult {
 
   if (volatilityPct > 2) return { name: '높은 변동성', impact: 'negative', weight: -0.3 };
   if (volatilityPct > 1) return { name: '보통 변동성', impact: 'neutral', weight: 0 };
-  return { name: '낮은 변동성', impact: 'positive', weight: 0.2 };
+  return { name: '낮은 변동성', impact: 'neutral', weight: 0 };
 }
 
 function analyze52WeekPosition(quote: FuturesQuote): FactorResult | null {

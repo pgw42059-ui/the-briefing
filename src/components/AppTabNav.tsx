@@ -12,14 +12,34 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/use-auth';
-import { useNotifications } from '@/hooks/use-notifications';
+import { useNotifications, type AppNotification, type PriceAlert } from '@/hooks/use-notifications';
 
 const NotificationBell = lazy(() => import('@/components/NotificationBell').then(m => ({ default: m.NotificationBell })));
 
 type TabValue = 'quotes' | 'analysis' | 'calendar' | 'calculator';
 
+/** Index.tsx처럼 실시간 데이터가 있는 페이지에서 알림 컨텍스트를 주입할 때 사용 */
+export interface NotificationHandlers {
+  notifications: AppNotification[];
+  unreadCount: number;
+  prefs: ReturnType<typeof useNotifications>['prefs'];
+  updatePrefs: ReturnType<typeof useNotifications>['updatePrefs'];
+  requestBrowserPermission: ReturnType<typeof useNotifications>['requestBrowserPermission'];
+  markAllRead: ReturnType<typeof useNotifications>['markAllRead'];
+  markOneRead: ReturnType<typeof useNotifications>['markOneRead'];
+  deleteOne: ReturnType<typeof useNotifications>['deleteOne'];
+  clearAll: ReturnType<typeof useNotifications>['clearAll'];
+  priceAlerts: PriceAlert[];
+  deletePriceAlert: ReturnType<typeof useNotifications>['deletePriceAlert'];
+  clearTriggeredAlerts: ReturnType<typeof useNotifications>['clearTriggeredAlerts'];
+}
+
 interface AppTabNavProps {
   activeTab: TabValue;
+  /** 실시간 데이터 연결 상태 (Index에서만 사용) */
+  isLive?: boolean;
+  /** 실시간 알림 컨텍스트 (Index에서 주입). 없으면 내부 useNotifications 사용 */
+  notificationHandlers?: NotificationHandlers;
 }
 
 const TAB_ROUTES: Record<TabValue, string> = {
@@ -29,16 +49,32 @@ const TAB_ROUTES: Record<TabValue, string> = {
   calculator: '/calculator',
 };
 
-export function AppTabNav({ activeTab }: AppTabNavProps) {
+export function AppTabNav({ activeTab, isLive, notificationHandlers }: AppTabNavProps) {
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const { user, displayName, signOut } = useAuth();
+  const internal = useNotifications(undefined, [], []);
+
+  // 주입된 핸들러가 있으면 사용, 없으면 내부 상태 폴백
   const {
     notifications, unreadCount, prefs: notifPrefs,
-    updateNotifPrefs, requestBrowserPermission,
-    markAllRead, markOneRead, deleteOne, clearNotifications,
+    updatePrefs, requestBrowserPermission,
+    markAllRead, markOneRead, deleteOne, clearAll,
     priceAlerts, deletePriceAlert, clearTriggeredAlerts,
-  } = useNotifications(undefined, [], []);
+  } = notificationHandlers ?? {
+    notifications: internal.notifications,
+    unreadCount: internal.unreadCount,
+    prefs: internal.prefs,
+    updatePrefs: internal.updatePrefs,
+    requestBrowserPermission: internal.requestBrowserPermission,
+    markAllRead: internal.markAllRead,
+    markOneRead: internal.markOneRead,
+    deleteOne: internal.deleteOne,
+    clearAll: internal.clearAll,
+    priceAlerts: internal.priceAlerts,
+    deletePriceAlert: internal.deletePriceAlert,
+    clearTriggeredAlerts: internal.clearTriggeredAlerts,
+  };
 
   return (
     <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-lg border-b border-border/40">
@@ -72,34 +108,45 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">시세</span>
+              <span>시세</span>
             </TabsTrigger>
             <TabsTrigger
               value="analysis"
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">분석</span>
+              <span>분석</span>
             </TabsTrigger>
             <TabsTrigger
               value="calendar"
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">캘린더</span>
+              <span>캘린더</span>
             </TabsTrigger>
             <TabsTrigger
               value="calculator"
               className="text-xs sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold transition-all"
             >
               <Calculator className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">계산기</span>
+              <span>계산기</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* 우측 액션 버튼 */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* LIVE 배지 */}
+          {isLive && (
+            <div
+              className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 border border-primary/20"
+              role="status"
+              aria-label="실시간 데이터 연결됨"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+              <span className="text-xs font-semibold text-primary">LIVE</span>
+            </div>
+          )}
           {/* 날짜 */}
           <span className="text-[11px] text-muted-foreground font-medium hidden sm:inline px-1">
             {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
@@ -124,12 +171,12 @@ export function AppTabNav({ activeTab }: AppTabNavProps) {
               notifications={notifications}
               unreadCount={unreadCount}
               prefs={notifPrefs}
-              onUpdatePrefs={updateNotifPrefs}
+              onUpdatePrefs={updatePrefs}
               onRequestBrowserPermission={requestBrowserPermission}
               onMarkAllRead={markAllRead}
               onMarkOneRead={markOneRead}
               onDeleteOne={deleteOne}
-              onClearAll={clearNotifications}
+              onClearAll={clearAll}
               priceAlerts={priceAlerts}
               onDeletePriceAlert={deletePriceAlert}
               onClearTriggeredAlerts={clearTriggeredAlerts}

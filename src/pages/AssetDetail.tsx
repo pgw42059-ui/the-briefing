@@ -44,8 +44,6 @@ const ASSET_KEYWORDS: Record<string, string[]> = {
   USDKRW:  ['FOMC', 'CPI', '비농업', 'NFP', '연준', '달러', '금리', '한국', '무역수지'],
 };
 
-// 오늘 날짜 문자열 — 컴포넌트 마운트마다 재계산하지 않도록 모듈 레벨에 위치
-const TODAY_STR = new Date().toISOString().slice(0, 10);
 
 const RANGE_OPTIONS = [
   { label: '1일', range: '1d', interval: '5m' },
@@ -60,6 +58,8 @@ const AssetDetail = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const upperSymbol = symbol?.toUpperCase() || '';
   const detail = mockAssetDetails[upperSymbol];
+  // 자정이 지나도 stale하지 않도록 컴포넌트 마운트 시점에 계산
+  const TODAY_STR = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [rangeIdx, setRangeIdx] = useState(2);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const selectedRange = RANGE_OPTIONS[rangeIdx];

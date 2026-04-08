@@ -46,8 +46,8 @@ export function MarketSummary({ items, isLoading, isError, onRefresh, isRefreshi
           <div className="flex items-center gap-1">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" title="캐시 설정">
-                  <Settings2 className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" aria-label="캐시 설정" title="캐시 설정">
+                  <Settings2 className="w-4 h-4" aria-hidden="true" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-56 p-3 rounded-xl" align="end">
@@ -77,8 +77,8 @@ export function MarketSummary({ items, isLoading, isError, onRefresh, isRefreshi
               </PopoverContent>
             </Popover>
             {onRefresh && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={onRefresh} disabled={isLoading || isRefreshing} title="새로고침">
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={onRefresh} disabled={isLoading || isRefreshing} aria-label="새로고침" title="새로고침">
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
               </Button>
             )}
           </div>
@@ -87,12 +87,8 @@ export function MarketSummary({ items, isLoading, isError, onRefresh, isRefreshi
       <CardContent className="space-y-2.5">
         {isLoading ? (
           <>
-            <div className="flex items-start gap-2.5 text-sm p-2.5 rounded-lg bg-muted/50">
-              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <p className="text-foreground/80 leading-relaxed">{fallbackItems[0].text}</p>
-            </div>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-7 w-full rounded-lg" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-lg" />
             ))}
           </>
         ) : isError ? (

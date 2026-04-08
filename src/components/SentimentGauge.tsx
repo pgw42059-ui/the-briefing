@@ -59,7 +59,7 @@ export const SentimentGauge = memo(function SentimentGauge({ signal }: Sentiment
           <div className="flex justify-between text-[10px] sm:text-[11px] text-muted-foreground mt-1 font-medium">
             <span>🔵 약세</span>
             <span>중립</span>
-            <span>강세 🔴</span>
+            <span>🔴 강세</span>
           </div>
         </div>
 

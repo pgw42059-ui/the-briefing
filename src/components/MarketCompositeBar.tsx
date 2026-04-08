@@ -80,7 +80,7 @@ export const MarketCompositeBar = memo(function MarketCompositeBar({ composite }
             <div className="flex justify-between text-[10px] text-muted-foreground font-medium">
               <span>🔵 극도 약세</span>
               <span>중립</span>
-              <span>극도 강세 🔴</span>
+              <span>🔴 극도 강세</span>
             </div>
           </div>
         </div>
