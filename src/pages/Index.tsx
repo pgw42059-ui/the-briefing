@@ -63,6 +63,9 @@ const Index = () => {
   const composite = useMemo(() => quotes ? computeCompositeScore(quotes, fearGreed ?? null) : null, [quotes, fearGreed]);
   const { data: sparklines } = useSparklines(ALL_SYMBOLS);
   const [cacheTtlMinutes, setCacheTtlMinutes] = useState(60);
+  const [signalTab, setSignalTab] = useState<'indices' | 'commodities' | 'fx'>(
+    () => (localStorage.getItem('signal-tab') as 'indices' | 'commodities' | 'fx') ?? 'indices'
+  );
   const { user } = useAuth();
   const { symbols: watchlistSymbols, isWatched, toggle: toggleWatchlist } = useWatchlist();
 
@@ -303,7 +306,15 @@ const Index = () => {
                   <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">각 종목의 방향성을 한눈에 파악하세요</p>
                 </div>
               </div>
-              <Tabs defaultValue="indices" className="w-full">
+              <Tabs
+                value={signalTab}
+                onValueChange={(v) => {
+                  const tab = v as 'indices' | 'commodities' | 'fx';
+                  setSignalTab(tab);
+                  localStorage.setItem('signal-tab', tab);
+                }}
+                className="w-full"
+              >
                 <TabsList className="h-8 sm:h-9 rounded-xl bg-muted/70 border border-border/50 p-0.5 mb-4">
                   <TabsTrigger value="indices" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-2.5 h-7 sm:h-8 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-semibold">
                     <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />

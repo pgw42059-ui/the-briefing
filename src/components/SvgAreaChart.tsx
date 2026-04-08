@@ -138,19 +138,26 @@ export function SvgAreaChart({ data, color, className = '' }: SvgAreaChartProps)
         )}
       </svg>
       {/* Tooltip label (HTML overlay for crisp text) */}
-      {tooltip && svgRef.current && (
-        <div
-          className="pointer-events-none absolute z-10 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl"
-          style={{
-            left: `${(tooltip.x / viewW) * 100}%`,
-            top: 0,
-            transform: 'translateX(-50%)',
-          }}
-        >
-          <p className="text-muted-foreground">{tooltip.date}</p>
-          <p className="font-mono font-bold">{tooltip.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-        </div>
-      )}
+      {tooltip && svgRef.current && (() => {
+        const leftPct = (tooltip.x / viewW) * 100;
+        const topPct  = (tooltip.y / viewH) * 100;
+        // 데이터 포인트 위에 표시, 상단 10% 이내면 아래로 전환
+        const showBelow = topPct < 20;
+        return (
+          <div
+            className="pointer-events-none absolute z-10 rounded-lg border border-border/60 bg-background/95 backdrop-blur-sm px-2.5 py-1.5 text-xs shadow-xl"
+            style={{
+              left: `clamp(0px, calc(${leftPct}% - 52px), calc(100% - 110px))`,
+              top: showBelow
+                ? `calc(${topPct}% + 10px)`
+                : `calc(${topPct}% - 52px)`,
+            }}
+          >
+            <p className="text-muted-foreground text-[10px] leading-tight">{tooltip.date}</p>
+            <p className="font-mono font-bold text-foreground">{tooltip.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          </div>
+        );
+      })()}
     </div>
   );
 }

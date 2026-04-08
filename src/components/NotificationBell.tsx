@@ -95,10 +95,15 @@ export const NotificationBell = memo(function NotificationBell({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl relative" aria-label={unreadCount > 0 ? `알림 ${unreadCount > 9 ? '9+' : unreadCount}개 읽지 않음` : '알림'}>
-          <Bell className="w-4 h-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl relative"
+          aria-label={unreadCount > 0 ? `알림 ${unreadCount > 9 ? '9+' : unreadCount}개 읽지 않음` : '알림'}
+        >
+          <Bell className={`w-4 h-4 transition-colors ${unreadCount > 0 ? 'text-warning animate-[bell-shake_0.6s_ease-in-out]' : ''}`} />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center animate-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
