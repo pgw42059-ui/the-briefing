@@ -30,8 +30,8 @@
     background: radial-gradient(ellipse 70% 55% at 50% 55%, rgba(44,150,141,0.07) 0%, transparent 65%);
   }
   .icon svg {
-    width: 390px;
-    height: 390px;
+    width: 360px;
+    height: 360px;
     position: relative;
     z-index: 1;
   }
@@ -96,30 +96,47 @@
       <!-- ── Render order: green lines → red lines → green arrowheads → red arrowheads ── -->
       <!-- Green arrowheads cover red lines at junction points B & D (clean peak) -->
 
+      <!--
+        Updated M points — A/E raised to y=305 to clear squircle corners:
+          A (70, 305)   B (105, 50)   C (200, 248)   D (295, 50)   E (330, 305)
+
+        AB: dx=35,dy=-255  |d|=257.4  u=(0.136,-0.991)  p=(0.991,0.136)
+          tip B(105,50): base=(105-7.1,50+51.5)=(97.9,101.5)
+          L=(97.9-35.7,101.5-4.9)=(62.2,96.6) R=(97.9+35.7,101.5+4.9)=(133.6,106.4)
+          notch=(105+0.35*(97.9-105),50+0.35*(101.5-50))=(102.5,68.0)
+          ▲ "105,50 62,97 103,68 134,106"
+
+        DE: dx=35,dy=255  |d|=257.4  u=(0.136,0.991)  p=(-0.991,0.136)
+          tip E(330,305): base=(330-7.1,305-51.5)=(322.9,253.5)
+          L=(322.9+35.7,253.5-4.9)=(358.6,248.6) R=(322.9-35.7,253.5+4.9)=(287.2,258.4)
+          notch=(330+0.35*(322.9-330),305+0.35*(253.5-305))=(327.5,287.0)
+          ▲ "330,305 359,249 328,287 287,258"
+      -->
+
       <!-- 1. Green line halos -->
       <g filter="url(#haloG)" opacity="0.70">
-        <line x1="70" y1="360" x2="105" y2="50" stroke="#3dbdb3" stroke-width="20" stroke-linecap="round"/>
+        <line x1="70" y1="305" x2="105" y2="50" stroke="#3dbdb3" stroke-width="20" stroke-linecap="round"/>
         <line x1="200" y1="248" x2="295" y2="50" stroke="#3dbdb3" stroke-width="20" stroke-linecap="round"/>
       </g>
       <!-- 2. Red line halos -->
       <g filter="url(#haloR)" opacity="0.70">
         <line x1="105" y1="50" x2="200" y2="248" stroke="#c07070" stroke-width="20" stroke-linecap="round"/>
-        <line x1="295" y1="50" x2="330" y2="360" stroke="#c07070" stroke-width="20" stroke-linecap="round"/>
+        <line x1="295" y1="50" x2="330" y2="305" stroke="#c07070" stroke-width="20" stroke-linecap="round"/>
       </g>
       <!-- 3. Green arrowhead halos -->
       <g filter="url(#haloG)" opacity="0.70">
-        <polygon points="105,50 63,98 103,68 135,106" fill="#3dbdb3"/>
+        <polygon points="105,50 62,97 103,68 134,106" fill="#3dbdb3"/>
         <polygon points="295,50 240,81 287,66 304,113" fill="#3dbdb3"/>
       </g>
       <!-- 4. Red arrowhead halos -->
       <g filter="url(#haloR)" opacity="0.70">
         <polygon points="200,248 209,186 192,232 145,217" fill="#c07070"/>
-        <polygon points="330,360 360,304 328,342 289,312" fill="#c07070"/>
+        <polygon points="330,305 359,249 328,287 287,258" fill="#c07070"/>
       </g>
 
       <!-- 5. Green lines (sharp) -->
       <g filter="url(#sharpG)">
-        <line x1="70" y1="360" x2="105" y2="50"
+        <line x1="70" y1="305" x2="105" y2="50"
               stroke="#2c968d" stroke-width="14" stroke-linecap="round"/>
         <line x1="200" y1="248" x2="295" y2="50"
               stroke="#2c968d" stroke-width="14" stroke-linecap="round"/>
@@ -128,12 +145,12 @@
       <g filter="url(#sharpR)">
         <line x1="105" y1="50" x2="200" y2="248"
               stroke="#a05555" stroke-width="14" stroke-linecap="round"/>
-        <line x1="295" y1="50" x2="330" y2="360"
+        <line x1="295" y1="50" x2="330" y2="305"
               stroke="#a05555" stroke-width="14" stroke-linecap="round"/>
       </g>
       <!-- 7. Green arrowheads (sharp) — cover red lines at B & D -->
       <g filter="url(#sharpG)">
-        <polygon points="105,50 63,98 103,68 135,106"
+        <polygon points="105,50 62,97 103,68 134,106"
                  fill="#1d6b65" stroke="#2c968d" stroke-width="2.5" stroke-linejoin="round"/>
         <polygon points="295,50 240,81 287,66 304,113"
                  fill="#1d6b65" stroke="#2c968d" stroke-width="2.5" stroke-linejoin="round"/>
@@ -142,7 +159,7 @@
       <g filter="url(#sharpR)">
         <polygon points="200,248 209,186 192,232 145,217"
                  fill="#6e3535" stroke="#a05555" stroke-width="2.5" stroke-linejoin="round"/>
-        <polygon points="330,360 360,304 328,342 289,312"
+        <polygon points="330,305 359,249 328,287 287,258"
                  fill="#6e3535" stroke="#a05555" stroke-width="2.5" stroke-linejoin="round"/>
       </g>
     </svg>
