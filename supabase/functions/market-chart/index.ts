@@ -75,15 +75,19 @@ serve(async (req) => {
       cacheStatus = 'HIT';
     } else {
       const yahooSymbol = SYMBOL_MAP[symbol];
-      const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`;
+      const YAHOO_HOSTS = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
+      const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-      const response = await fetch(chartUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      });
+      let response: Response | null = null;
+      for (const host of YAHOO_HOSTS) {
+        try {
+          const chartUrl = `https://${host}/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`;
+          const r = await fetch(chartUrl, { headers: { 'User-Agent': UA } });
+          if (r.ok) { response = r; break; }
+        } catch { /* 다음 호스트 시도 */ }
+      }
 
-      if (!response.ok) throw new Error(`Yahoo Finance chart API error: ${response.status}`);
+      if (!response) throw new Error('Yahoo Finance chart API unavailable on all hosts');
 
       const data   = await response.json();
       const result = data?.chart?.result?.[0];

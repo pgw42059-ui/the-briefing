@@ -32,22 +32,23 @@ const CACHE_TTL_MS = 25_000; // 25초 (클라이언트 30초 주기보다 짧게
 let cachedQuotes: any[] | null = null;
 let cacheTimestamp = 0;
 
+const YAHOO_HOSTS = ['query1.finance.yahoo.com', 'query2.finance.yahoo.com'];
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
 async function fetchQuote(yahooSymbol: string): Promise<any | null> {
-  try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1d&range=1d`;
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const meta = data?.chart?.result?.[0]?.meta;
-    if (!meta) return null;
-    return meta;
-  } catch {
-    return null;
+  for (const host of YAHOO_HOSTS) {
+    try {
+      const url = `https://${host}/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?interval=1d&range=1d`;
+      const res = await fetch(url, { headers: { 'User-Agent': UA } });
+      if (!res.ok) continue; // 다음 호스트 시도
+      const data = await res.json();
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (meta) return meta;
+    } catch {
+      // 다음 호스트 시도
+    }
   }
+  return null;
 }
 
 async function fetchAllQuotes(): Promise<any[]> {
