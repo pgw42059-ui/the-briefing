@@ -60,7 +60,7 @@ export function useMarketAnalysis(
     queryFn: () => {
       const force = forceRefreshRef.current;
       forceRefreshRef.current = false;
-      return fetchMarketAnalysis(quotes!, events || [], force, cacheTtlMinutes);
+      return fetchMarketAnalysis(quotes ?? [], events ?? [], force, cacheTtlMinutes);
     },
     enabled: !!quotes && quotes.length > 0,
     staleTime: 10 * 60_000,

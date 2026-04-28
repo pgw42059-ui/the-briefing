@@ -9,6 +9,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SwipeableNotificationItem } from '@/components/SwipeableNotificationItem';
 import type { AppNotification, PriceAlert } from '@/hooks/use-notifications';
 
+const BELL_FILTER_KEY = 'notif-bell-filter';
+type FilterKey = 'all' | 'price' | 'calendar' | 'watchlist' | 'summary';
+
 interface NotificationBellProps {
   notifications: AppNotification[];
   unreadCount: number;
@@ -89,7 +92,9 @@ export const NotificationBell = memo(function NotificationBell({
 }: NotificationBellProps) {
   const activeAlerts = priceAlerts.filter(a => !a.triggered);
   const triggeredAlerts = priceAlerts.filter(a => a.triggered);
-  const [filter, setFilter] = useState<'all' | 'price' | 'calendar' | 'watchlist' | 'summary'>('all');
+  const [filter, setFilter] = useState<FilterKey>(
+    () => (localStorage.getItem(BELL_FILTER_KEY) as FilterKey) ?? 'all'
+  );
   const filtered = useMemo(() => filter === 'all' ? notifications : notifications.filter(n => n.type === filter), [notifications, filter]);
   const grouped = useMemo(() => groupByDate(filtered), [filtered]);
   return (
@@ -134,7 +139,7 @@ export const NotificationBell = memo(function NotificationBell({
                   variant={filter === key ? 'default' : 'outline'}
                   size="sm"
                   className={`h-6 text-[10px] gap-1 px-2 rounded-full shrink-0 ${filter === key ? '' : 'border-border/60'}`}
-                  onClick={() => setFilter(key)}
+                  onClick={() => { setFilter(key); localStorage.setItem(BELL_FILTER_KEY, key); }}
                 >
                   <Icon className="w-3 h-3" />
                   {label}

@@ -150,16 +150,19 @@ const AssetDetail = () => {
   }, [allEvents, upperSymbol, detail]);
 
   // AI 분석용 데이터 준비
-  const quoteForAI = useMemo(() => quote ? [{
-    symbol: quote.symbol,
-    name: detail.name,
-    nameKr: detail.nameKr,
-    price: quote.price,
-    change: quote.change,
-    changePercent: quote.changePercent,
-    high: quote.high,
-    low: quote.low,
-  }] : undefined, [quote, detail]);
+  const quoteForAI = useMemo(() => {
+    if (!quote || !detail) return undefined;
+    return [{
+      symbol: quote.symbol,
+      name: detail.name,
+      nameKr: detail.nameKr,
+      price: quote.price,
+      change: quote.change,
+      changePercent: quote.changePercent,
+      high: quote.high,
+      low: quote.low,
+    }];
+  }, [quote, detail]);
 
   const eventsForAI = useMemo(() => {
     const keywords = ASSET_KEYWORDS[upperSymbol] ?? [];
@@ -294,11 +297,13 @@ const AssetDetail = () => {
     );
   }
 
+  if (!signal) return null;
+
   const isUp = quote.change >= 0;
-  const sentimentLabel = signal!.sentiment === 'bullish' ? '강세' : signal!.sentiment === 'bearish' ? '약세' : '중립';
-  const sentimentColor = signal!.sentiment === 'bullish' ? 'text-up' : signal!.sentiment === 'bearish' ? 'text-down' : 'text-muted-foreground';
-  const SentimentIcon = signal!.sentiment === 'bullish' ? TrendingUp : signal!.sentiment === 'bearish' ? TrendingDown : Minus;
-  const gaugePercent = ((signal!.score + 100) / 200) * 100;
+  const sentimentLabel = signal.sentiment === 'bullish' ? '강세' : signal.sentiment === 'bearish' ? '약세' : '중립';
+  const sentimentColor = signal.sentiment === 'bullish' ? 'text-up' : signal.sentiment === 'bearish' ? 'text-down' : 'text-muted-foreground';
+  const SentimentIcon = signal.sentiment === 'bullish' ? TrendingUp : signal.sentiment === 'bearish' ? TrendingDown : Minus;
+  const gaugePercent = ((signal.score + 100) / 200) * 100;
 
   const chartColor = isUp ? 'hsl(var(--up))' : 'hsl(var(--down))';
   const activeAlertCount = symbolAlerts.filter(a => !a.triggered).length;
@@ -565,7 +570,7 @@ const AssetDetail = () => {
                 <span className="flex items-center gap-2"><img src="/icons/icon-target.png" alt="" className="w-5 h-5" /> 강세/약세 시그널</span>
                 <span className={`flex items-center gap-1.5 text-sm font-bold ${sentimentColor}`}>
                   <SentimentIcon className="w-4 h-4" />
-                  {sentimentLabel} ({signal!.score > 0 ? '+' : ''}{signal!.score})
+                  {sentimentLabel} ({signal.score > 0 ? '+' : ''}{signal.score})
                 </span>
               </CardTitle>
             </CardHeader>
@@ -585,7 +590,7 @@ const AssetDetail = () => {
                     className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-card shadow-md transition-all duration-500"
                     style={{
                       left: `calc(${gaugePercent}% - 10px)`,
-                      backgroundColor: signal!.sentiment === 'bullish' ? 'hsl(var(--up))' : signal!.sentiment === 'bearish' ? 'hsl(var(--down))' : 'hsl(var(--muted-foreground))',
+                      backgroundColor: signal.sentiment === 'bullish' ? 'hsl(var(--up))' : signal.sentiment === 'bearish' ? 'hsl(var(--down))' : 'hsl(var(--muted-foreground))',
                     }}
                   />
                 </div>
@@ -596,7 +601,7 @@ const AssetDetail = () => {
               {/* Factors */}
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground">영향 요인</p>
-                {signal!.factors.map((f, i) => (
+                {signal.factors.map((f, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-sm">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${
                       f.impact === 'positive' ? 'bg-up' : f.impact === 'negative' ? 'bg-down' : 'bg-muted-foreground'

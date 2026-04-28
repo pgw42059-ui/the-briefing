@@ -31,6 +31,16 @@ const COMMODITY_SYMBOLS = ['GC', 'SI', 'CL', 'NG', 'HG'];
 const FX_SYMBOLS = ['USDKRW', 'DXY', 'EURUSD', 'USDJPY', 'GBPUSD', 'AUDUSD', 'USDCAD'];
 const ALL_SYMBOLS = [...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS, ...FX_SYMBOLS];
 
+function QuoteListSkeleton({ count }: { count: number }) {
+  return (
+    <div className="p-3 space-y-1">
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className="h-10 rounded" />
+      ))}
+    </div>
+  );
+}
+
 function SignalGrid({ items }: { items: ReturnType<typeof computeAllSignals> }) {
   // 3열 그리드 기준 마지막 행에 아이템이 1개뿐이면 중앙 정렬
   const orphanLg = items.length % 3 === 1;
@@ -215,7 +225,7 @@ const Index = () => {
                     <BarChart3 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     <span className="text-xs font-bold text-foreground/80">주요 지수</span>
                   </div>
-                  <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:7}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                  <Suspense fallback={<QuoteListSkeleton count={7} />}>
                     <CompactQuoteList
                       quotes={indexQuotes}
                       sparklines={sparklines}
@@ -235,7 +245,7 @@ const Index = () => {
                       <Gem className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                       <span className="text-xs font-bold text-foreground/80">원자재</span>
                     </div>
-                    <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:5}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                    <Suspense fallback={<QuoteListSkeleton count={5} />}>
                       <CompactQuoteList
                         quotes={commodityQuotes}
                         sparklines={sparklines}
@@ -252,7 +262,7 @@ const Index = () => {
                       <DollarSign className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                       <span className="text-xs font-bold text-foreground/80">FX</span>
                     </div>
-                    <Suspense fallback={<div className="p-3 space-y-1">{Array.from({length:7}).map((_,i)=><Skeleton key={i} className="h-10 rounded"/>)}</div>}>
+                    <Suspense fallback={<QuoteListSkeleton count={7} />}>
                       <CompactQuoteList
                         quotes={fxQuotes}
                         sparklines={sparklines}

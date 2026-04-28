@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, ChevronRight, Star } from 'lucide-react';
 import { LazySparkline } from '@/components/LazySparkline';
@@ -93,6 +93,16 @@ interface CompactQuoteListProps {
 export const CompactQuoteList = memo(function CompactQuoteList({
   quotes, sparklines, skeletonCount = 5, isLoading, showWatchlist, isWatched, onToggleWatchlist,
 }: CompactQuoteListProps) {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    const rows = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="row"]'));
+    const idx = rows.indexOf(document.activeElement as HTMLElement);
+    if (idx === -1) return;
+    e.preventDefault();
+    const next = e.key === 'ArrowDown' ? rows[idx + 1] : rows[idx - 1];
+    next?.focus();
+  }, []);
+
   if (isLoading) {
     return (
       <div className="space-y-1">
@@ -104,7 +114,7 @@ export const CompactQuoteList = memo(function CompactQuoteList({
   }
 
   return (
-    <div className="divide-y divide-border/40" role="table" aria-label="시세 목록">
+    <div className="divide-y divide-border/40" role="table" aria-label="시세 목록" onKeyDown={handleKeyDown}>
       {quotes?.map((q) => (
         <CompactQuoteRow
           key={q.symbol}

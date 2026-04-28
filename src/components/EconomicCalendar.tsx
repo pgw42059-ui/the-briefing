@@ -20,6 +20,17 @@ type CategoryTab = 'macro' | 'earnings';
 type ViewMode = 'day' | 'week';
 type EarningsRegion = 'all' | 'us' | 'kr';
 
+const CAL_PREF_KEY = 'cal-filter-prefs';
+function loadCalPrefs() {
+  try {
+    const s = localStorage.getItem(CAL_PREF_KEY);
+    return s ? JSON.parse(s) : {};
+  } catch { return {}; }
+}
+function saveCalPrefs(prefs: object) {
+  try { localStorage.setItem(CAL_PREF_KEY, JSON.stringify(prefs)); } catch { /* ignore */ }
+}
+
 /** 다음 주요 이벤트까지 카운트다운 배너 */
 function NextEventCountdown({ events }: { events: EconomicEvent[] }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -55,10 +66,10 @@ function NextEventCountdown({ events }: { events: EconomicEvent[] }) {
 export const EconomicCalendar = memo(function EconomicCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [importance, setImportance] = useState<ImportanceLevel>('all');
-  const [category, setCategory] = useState<CategoryTab>('macro');
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
-  const [earningsRegion, setEarningsRegion] = useState<EarningsRegion>('all');
+  const [importance, setImportance] = useState<ImportanceLevel>(() => loadCalPrefs().importance ?? 'all');
+  const [category, setCategory] = useState<CategoryTab>(() => loadCalPrefs().category ?? 'macro');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => loadCalPrefs().viewMode ?? 'day');
+  const [earningsRegion, setEarningsRegion] = useState<EarningsRegion>(() => loadCalPrefs().earningsRegion ?? 'all');
 
   const { data: macroEvents = [], isLoading: macroLoading } = useEconomicEvents();
   const { data: earningsEvents = [], isLoading: earningsLoading } = useEarningsEvents();
@@ -161,12 +172,14 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
     setExpandedId(null);
     setImportance('all');
     setEarningsRegion('all');
-  }, []);
+    saveCalPrefs({ category: tab, importance: 'all', viewMode, earningsRegion: 'all' });
+  }, [viewMode]);
 
   const handleViewMode = useCallback((mode: ViewMode) => {
     setViewMode(mode);
     setExpandedId(null);
-  }, []);
+    saveCalPrefs({ category, importance, viewMode: mode, earningsRegion });
+  }, [category, importance, earningsRegion]);
 
   const handleWeekDaySelect = useCallback((date: Date) => {
     setSelectedDate(date);
@@ -279,7 +292,7 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
             {(['all', 'us', 'kr'] as EarningsRegion[]).map(region => (
               <button
                 key={region}
-                onClick={() => setEarningsRegion(region)}
+                onClick={() => { setEarningsRegion(region); saveCalPrefs({ category, importance, viewMode, earningsRegion: region }); }}
                 className={cn(
                   'px-2.5 py-1 text-xs font-medium rounded-md transition-colors border',
                   earningsRegion === region
@@ -298,7 +311,7 @@ export const EconomicCalendar = memo(function EconomicCalendar() {
           <div className="mt-2">
             <ImportanceFilter
               value={importance}
-              onChange={setImportance}
+              onChange={(v) => { setImportance(v); saveCalPrefs({ category, importance: v, viewMode, earningsRegion }); }}
               counts={viewMode === 'week' ? weekCounts : counts}
             />
           </div>

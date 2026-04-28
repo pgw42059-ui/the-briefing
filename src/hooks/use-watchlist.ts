@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -6,6 +6,8 @@ export function useWatchlist() {
   const { user } = useAuth();
   const [symbols, setSymbols] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const symbolsRef = useRef<string[]>([]);
+  useEffect(() => { symbolsRef.current = symbols; }, [symbols]);
 
   const fetchWatchlist = useCallback(async () => {
     if (!user) {
@@ -28,14 +30,14 @@ export function useWatchlist() {
 
   const toggle = useCallback(async (symbol: string) => {
     if (!user) return;
-    if (symbols.includes(symbol)) {
+    if (symbolsRef.current.includes(symbol)) {
       await supabase.from('watchlist').delete().eq('user_id', user.id).eq('symbol', symbol);
       setSymbols(prev => prev.filter(s => s !== symbol));
     } else {
       await supabase.from('watchlist').insert({ user_id: user.id, symbol });
       setSymbols(prev => [...prev, symbol]);
     }
-  }, [user, symbols]);
+  }, [user]);
 
   const isWatched = useCallback((symbol: string) => symbols.includes(symbol), [symbols]);
 

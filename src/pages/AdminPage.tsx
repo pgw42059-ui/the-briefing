@@ -29,8 +29,11 @@ function SignalBarChart({ data }: { data: SignalSnap[] }) {
   const barW = Math.max(6, Math.floor(barGroupW * 0.28));
   const gap = Math.floor(barGroupW * 0.06);
 
+  const latest = data[data.length - 1];
+  const summary = latest ? `강세 ${latest.bullish}개, 약세 ${latest.bearish}개, 중립 ${latest.neutral}개` : '데이터 없음';
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+    <svg role="img" aria-label={`시그널 발생 현황 바 차트. ${summary}`} viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
       {[0, 0.25, 0.5, 0.75, 1].map(t => {
         const y = PT + chartH * (1 - t);
         return (
@@ -67,8 +70,9 @@ function SignupMiniChart({ data }: { data: { date: string; count: number }[] }) 
   const maxVal = Math.max(...data.map(d => d.count), 1);
   const barW = Math.max(4, Math.floor(chartW / data.length) - 3);
 
+  const maxDay = data.reduce((a, b) => (b.count > a.count ? b : a), data[0]);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+    <svg role="img" aria-label={`최근 7일 신규 가입 차트. 최다 ${maxDay?.date} ${maxDay?.count}명`} viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
       {data.map((d, i) => {
         const cx = PL + (i + 0.5) * (chartW / data.length);
         const bH = Math.max((d.count / maxVal) * chartH, d.count > 0 ? 2 : 0);
@@ -127,7 +131,14 @@ function MiniBar({ value, max = 100, warn = 70, danger = 90 }: { value: number; 
   const pct = Math.min((value / max) * 100, 100);
   const color = value >= danger ? 'bg-destructive' : value >= warn ? 'bg-yellow-500' : 'bg-primary';
   return (
-    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+    <div
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-label={`${value}% 사용 중`}
+      className="h-2 w-full rounded-full bg-muted overflow-hidden"
+    >
       <div className={`h-full rounded-full transition-all duration-700 ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -268,7 +279,7 @@ export default function AdminPage() {
       </header>
 
       {/* ── 바디 ─────────────────────────────────────── */}
-      <div className="flex-1 max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
+      <main className="flex-1 max-w-[1400px] mx-auto w-full px-4 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
 
         {/* ── 메인 (좌) ──────────────────────────────── */}
         <div className="flex flex-col gap-4">
@@ -410,7 +421,7 @@ export default function AdminPage() {
             )}
           </Card>
         </div>
-      </div>
+      </main>
 
       {/* ── 하단 섹션 ─────────────────────────────────── */}
       <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 pb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -475,7 +486,7 @@ export default function AdminPage() {
                   <p className="text-xs font-medium">{label}</p>
                   <p className="text-[10px] text-muted-foreground">{desc}</p>
                 </div>
-                <Switch checked={settings[key]} onCheckedChange={() => toggleSetting(key)} className="shrink-0" />
+                <Switch checked={settings[key]} onCheckedChange={() => toggleSetting(key)} className="shrink-0" aria-label={label} />
               </div>
             ))}
           </div>
@@ -497,8 +508,14 @@ function DbStats() {
     ];
     Promise.all(
       tables.map(async ({ name, table }) => {
-        const { count } = await supabase.from(table).select('*', { count: 'exact', head: true });
-        return { name, count };
+        try {
+          const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true });
+          if (error) throw error;
+          return { name, count };
+        } catch (e) {
+          console.warn(`[AdminPage] ${table} 행 수 조회 실패:`, e);
+          return { name, count: null };
+        }
       })
     ).then(setRows);
   }, []);

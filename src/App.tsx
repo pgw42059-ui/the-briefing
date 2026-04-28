@@ -63,20 +63,18 @@ const App = () => (
           <DeferredToasts />
           <BrowserRouter>
             <PresenceInit />
-            <ErrorBoundary>
-              <Suspense fallback={<div className="min-h-screen bg-background" />}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  <Route path="/install" element={<InstallPage />} />
-                  <Route path="/calculator" element={<CalculatorPage />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
-                  <Route path="/asset/:symbol" element={<AssetDetail />} />
-                  <Route path="/admin" element={<AdminPage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
+            <Suspense fallback={<div className="min-h-screen bg-background" />}>
+              <Routes>
+                <Route path="/" element={<ErrorBoundary fallbackTitle="시세 페이지 오류"><Index /></ErrorBoundary>} />
+                <Route path="/auth" element={<ErrorBoundary fallbackTitle="로그인 페이지 오류"><AuthPage /></ErrorBoundary>} />
+                <Route path="/install" element={<ErrorBoundary fallbackTitle="설치 페이지 오류"><InstallPage /></ErrorBoundary>} />
+                <Route path="/calculator" element={<ErrorBoundary fallbackTitle="계산기 오류"><CalculatorPage /></ErrorBoundary>} />
+                <Route path="/calendar" element={<ErrorBoundary fallbackTitle="캘린더 오류"><CalendarPage /></ErrorBoundary>} />
+                <Route path="/asset/:symbol" element={<ErrorBoundary fallbackTitle="종목 상세 오류"><AssetDetail /></ErrorBoundary>} />
+                <Route path="/admin" element={<ErrorBoundary fallbackTitle="관리자 페이지 오류"><AdminPage /></ErrorBoundary>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </LazyTooltipProvider>
       </Suspense>

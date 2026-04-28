@@ -72,14 +72,14 @@ interface EarningsEvent {
   timing: 'BMO' | 'AMC' | 'TNS';
 }
 
-interface FinnhubEarning {
-  date: string;
+interface FMPEarning {
   symbol: string;
-  epsActual: number | null;
-  epsEstimate: number | null;
-  revenueActual: number | null;
-  revenueEstimate: number | null;
-  hour: string;
+  date: string;
+  time: string;       // "amc" | "bmo" | "dmh" | ""
+  eps: number | null;
+  epsEstimated: number | null;
+  revenue: number | null;
+  revenueEstimated: number | null;
 }
 
 // ── 인메모리 캐시 (1시간) ──────────────────────────────────────────────────
@@ -110,28 +110,29 @@ function calcSurprise(epsEst?: string, epsAct?: string): number | undefined {
   return Math.round(((act - est) / Math.abs(est)) * 1000) / 10;
 }
 
-function mapTiming(hour: string): 'BMO' | 'AMC' | 'TNS' {
-  if (hour === 'bmo') return 'BMO';
-  if (hour === 'amc') return 'AMC';
+function mapTiming(time: string): 'BMO' | 'AMC' | 'TNS' {
+  const t = (time ?? '').toLowerCase();
+  if (t === 'bmo') return 'BMO';
+  if (t === 'amc') return 'AMC';
   return 'TNS';
 }
 
-// ── Finnhub API 호출 (서버사이드 키) ────────────────────────────────────────
-async function fetchFromFinnhub(): Promise<EarningsEvent[]> {
-  const key = Deno.env.get('FINNHUB_KEY');
+// ── FMP API 호출 ─────────────────────────────────────────────────────────────
+async function fetchFromFMP(): Promise<EarningsEvent[]> {
+  const key = Deno.env.get('FMP_KEY');
   if (!key) {
-    console.warn('FINNHUB_KEY not set — earnings-calendar returning empty');
+    console.warn('FMP_KEY not set — earnings-calendar returning empty');
     return [];
   }
 
   const { from, to } = getDateRange();
   const res = await fetch(
-    `https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&token=${key}`
+    `https://financialmodelingprep.com/stable/earnings-calendar?from=${from}&to=${to}&apikey=${key}`
   );
-  if (!res.ok) throw new Error(`Finnhub responded ${res.status}`);
+  if (!res.ok) throw new Error(`FMP responded ${res.status}`);
 
-  const data = await res.json();
-  const calendar: FinnhubEarning[] = data.earningsCalendar ?? [];
+  const calendar: FMPEarning[] = await res.json();
+  if (!Array.isArray(calendar)) throw new Error('FMP returned unexpected format');
 
   const events: EarningsEvent[] = [];
   for (const e of calendar) {
@@ -139,9 +140,9 @@ async function fetchFromFinnhub(): Promise<EarningsEvent[]> {
     const isKR = KR_TICKERS.has(e.symbol);
     if (!isUS && !isKR) continue;
 
-    const timing = mapTiming(e.hour);
-    const epsEst = e.epsEstimate != null ? String(e.epsEstimate) : undefined;
-    const epsAct = e.epsActual != null ? String(e.epsActual) : undefined;
+    const timing = mapTiming(e.time);
+    const epsEst = e.epsEstimated != null ? String(e.epsEstimated) : undefined;
+    const epsAct = e.eps != null ? String(e.eps) : undefined;
 
     events.push({
       id: `earn-${e.symbol}-${e.date}`,
@@ -158,8 +159,8 @@ async function fetchFromFinnhub(): Promise<EarningsEvent[]> {
       epsEstimate: epsEst,
       epsActual: epsAct,
       epsSurprisePct: calcSurprise(epsEst, epsAct),
-      revenueEstimate: e.revenueEstimate ?? undefined,
-      revenueActual: e.revenueActual ?? undefined,
+      revenueEstimate: e.revenueEstimated ?? undefined,
+      revenueActual: e.revenue ?? undefined,
       timing,
     });
   }
@@ -184,12 +185,11 @@ serve(async (req) => {
       events = cachedEvents!;
       cacheStatus = 'HIT';
     } else {
-      events = await fetchFromFinnhub();
+      events = await fetchFromFMP();
       if (events.length > 0) {
         cachedEvents = events;
         cacheTimestamp = now;
       } else if (cachedEvents !== null) {
-        // Finnhub 실패 시 만료 캐시 반환
         events = cachedEvents;
       }
       cacheStatus = 'MISS';
@@ -208,7 +208,6 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('earnings-calendar error:', error);
-    // 캐시가 있으면 만료돼도 반환
     if (cachedEvents !== null) {
       return new Response(
         JSON.stringify({ events: cachedEvents, cache: 'STALE' }),

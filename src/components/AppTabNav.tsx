@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotifications, type AppNotification, type PriceAlert } from '@/hooks/use-notifications';
+import { useMarketQuotes } from '@/hooks/use-market-quotes';
 
 const NotificationBell = lazy(() => import('@/components/NotificationBell').then(m => ({ default: m.NotificationBell })));
 
@@ -53,7 +54,9 @@ export function AppTabNav({ activeTab, isLive, notificationHandlers }: AppTabNav
   const navigate = useNavigate();
   const { theme, toggle } = useTheme();
   const { user, displayName, signOut } = useAuth();
-  const internal = useNotifications(undefined, [], []);
+  // 모든 페이지에서 가격 알림이 동작하도록 quotes 로드 (React Query 캐시 공유)
+  const { data: internalQuotes } = useMarketQuotes();
+  const internal = useNotifications(internalQuotes, [], []);
 
   // 주입된 핸들러가 있으면 사용, 없으면 내부 상태 폴백
   const {

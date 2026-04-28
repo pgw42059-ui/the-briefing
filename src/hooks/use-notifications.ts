@@ -71,8 +71,17 @@ export function loadPriceAlerts(): PriceAlert[] {
   }
 }
 
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    // QuotaExceededError 등 — 무시하고 메모리 상태는 유지
+    console.warn(`[notifications] localStorage 저장 실패 (${key}):`, e);
+  }
+}
+
 export function savePriceAlerts(alerts: PriceAlert[]): void {
-  localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(alerts));
+  safeSetItem(PRICE_ALERTS_KEY, JSON.stringify(alerts));
 }
 
 export function useNotifications(
@@ -97,14 +106,14 @@ export function useNotifications(
   // Persist notifications — debounce 500ms (빠른 연속 변경 시 write 최소화)
   useEffect(() => {
     const id = setTimeout(() => {
-      localStorage.setItem(NOTIFS_KEY, JSON.stringify(notifications.slice(0, MAX_NOTIFICATIONS)));
+      safeSetItem(NOTIFS_KEY, JSON.stringify(notifications.slice(0, MAX_NOTIFICATIONS)));
     }, 500);
     return () => clearTimeout(id);
   }, [notifications]);
 
   useEffect(() => {
     const id = setTimeout(() => {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+      safeSetItem(PREFS_KEY, JSON.stringify(prefs));
     }, 500);
     return () => clearTimeout(id);
   }, [prefs]);
@@ -112,7 +121,7 @@ export function useNotifications(
   // Persist price alerts — debounce 500ms
   useEffect(() => {
     const id = setTimeout(() => {
-      localStorage.setItem(PRICE_ALERTS_KEY, JSON.stringify(priceAlerts));
+      safeSetItem(PRICE_ALERTS_KEY, JSON.stringify(priceAlerts));
     }, 500);
     return () => clearTimeout(id);
   }, [priceAlerts]);
