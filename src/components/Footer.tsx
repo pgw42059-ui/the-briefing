@@ -2,7 +2,7 @@
 
 export const Footer = () => (
   <footer className="border-t border-border/60 bg-muted/30 mt-10" role="contentinfo">
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28 sm:pb-10 space-y-4">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-32 space-y-4">
       {/* 로고 + 패밀리 사이트 */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
