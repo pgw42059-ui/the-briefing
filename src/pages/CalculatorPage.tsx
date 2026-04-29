@@ -28,7 +28,7 @@ export default function CalculatorPage() {
 
       <div className="min-h-screen bg-background">
         <AppTabNav activeTab="calculator" />
-        <main className="max-w-2xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+        <main className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
           <CalculatorTab />
         </main>
         <Footer />

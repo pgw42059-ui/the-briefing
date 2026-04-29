@@ -218,7 +218,7 @@ const Index = () => {
                 </div>
               )}
 
-              <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid sm:grid-cols-2 gap-3 sm:gap-4 items-start">
                 {/* 주요 지수 */}
                 <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
                   <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-border/40 bg-muted/30">

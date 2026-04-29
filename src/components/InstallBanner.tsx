@@ -7,7 +7,7 @@ export function InstallBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = sessionStorage.getItem('install-banner-dismissed');
+    const dismissed = localStorage.getItem('install-banner-dismissed');
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (!dismissed && !isStandalone) {
       setVisible(true);
@@ -16,7 +16,7 @@ export function InstallBanner() {
 
   const dismiss = () => {
     setVisible(false);
-    sessionStorage.setItem('install-banner-dismissed', '1');
+    localStorage.setItem('install-banner-dismissed', '1');
   };
 
   if (!visible) return null;

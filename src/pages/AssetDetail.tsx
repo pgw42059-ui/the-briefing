@@ -18,6 +18,7 @@ import { computeSignal } from '@/lib/compute-signals';
 import { computeTechnicals } from '@/lib/compute-technicals';
 import { computeKeyLevels } from '@/lib/compute-levels';
 import { TechnicalIndicators } from '@/components/TechnicalIndicators';
+import { AppTabNav } from '@/components/AppTabNav';
 import { useTheme } from '@/hooks/use-theme';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PriceAlert } from '@/hooks/use-notifications';
@@ -316,6 +317,7 @@ const AssetDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       {helmet}
+      <AppTabNav activeTab="quotes" />
       {/* Header */}
       <header className="border-b border-border/60 sticky top-0 z-10 bg-background/90 backdrop-blur-lg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
