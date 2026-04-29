@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Clock } from 'lucide-react';
-import { AppTabNav } from '@/components/AppTabNav';
+import { GuideHeader } from '@/components/GuideHeader';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { mockAssetDetails } from '@/lib/mock-data';
@@ -53,7 +53,7 @@ export default function GuideTradingHours() {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        <AppTabNav activeTab="quotes" />
+        <GuideHeader />
         <main className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
           {/* 헤더 */}
           <div>
