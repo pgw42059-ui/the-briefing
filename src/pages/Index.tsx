@@ -128,21 +128,25 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>랩메린이 — 해외선물 경제지표 대시보드</title>
-        <meta name="description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 경제지표를 한눈에. 강세/약세 시그널과 기술적 분석을 제공합니다." />
+        <title>실시간 해외선물 시세 · 나스닥·항셍·금 선물 무료 차트 — 랩메린이</title>
+        <meta name="description" content="나스닥(NQ)·S&P500(ES)·다우(YM)·항셍(HSI)·금(GC)·원유(CL)·천연가스(NG) 등 17개 해외선물 실시간 시세를 무료로 제공합니다. AI 시장 브리핑, 강세/약세 시그널, 기술적 지표, 경제지표 캘린더를 한 페이지에서 확인하세요." />
+        <meta name="keywords" content="해외선물, 해외선물 시세, 나스닥선물, 나스닥 100 선물, S&P500 선물, 다우선물, 항셍선물, 항셍지수, 금선물, 골드선물, 원유선물, 크루드오일, 천연가스 선물, 닛케이선물, 유로스톡스, VIX, 실시간 선물 차트, 해외선물 강세 약세, 선물 시그널, 해외선물 거래시간, 선물 기술적 분석" />
         <link rel="canonical" href="https://lab.merini.com/" />
-        <meta property="og:title" content="랩메린이 — 해외선물 경제지표 대시보드" />
-        <meta property="og:description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 강세/약세 시그널을 한눈에 확인하세요." />
+        <meta property="og:title" content="실시간 해외선물 시세 · 나스닥·항셍·금 선물 무료 차트 — 랩메린이" />
+        <meta property="og:description" content="나스닥·S&P500·항셍·금·원유 등 17개 해외선물 실시간 시세, AI 시장 브리핑, 강세/약세 시그널을 무료로." />
         <meta property="og:url" content="https://lab.merini.com/" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://lab.merini.com/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="랩메린이 — 해외선물 경제지표 대시보드" />
-        <meta name="twitter:description" content="나스닥, S&P500, 항셍, 골드, 오일 등 해외선물 실시간 시세와 강세/약세 시그널을 한눈에 확인하세요." />
+        <meta name="twitter:title" content="실시간 해외선물 시세 · 나스닥·항셍·금 선물 무료 차트 — 랩메린이" />
+        <meta name="twitter:description" content="나스닥·S&P500·항셍·금·원유 등 17개 해외선물 실시간 시세, AI 시장 브리핑, 강세/약세 시그널을 무료로." />
         <meta name="twitter:image" content="https://lab.merini.com/og-image.png" />
       </Helmet>
+
+      {/* SEO H1 (시각적으로 숨김 처리, 스크린리더 노출) */}
+      <h1 className="sr-only">실시간 해외선물 시세 · 나스닥·S&P500·항셍·금·원유 선물 무료 차트와 AI 시장 분석 — 랩메린이</h1>
 
       {/* Skip to main content */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg">
@@ -191,8 +195,8 @@ const Index = () => {
                 <div className="flex items-center gap-2.5">
                   <div className="w-1 h-6 rounded-full bg-primary shrink-0" aria-hidden="true" />
                   <div>
-                    <h2 id="quotes-heading" className="text-base sm:text-lg font-bold leading-tight">실시간 시세</h2>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">클릭하면 상세 차트를 볼 수 있어요</p>
+                    <h2 id="quotes-heading" className="text-base sm:text-lg font-bold leading-tight">실시간 해외선물 시세</h2>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">나스닥·항셍·금·원유 — 클릭하면 상세 차트와 시그널을 볼 수 있어요</p>
                   </div>
                 </div>
               </div>

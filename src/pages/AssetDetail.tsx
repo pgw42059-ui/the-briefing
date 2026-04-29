@@ -213,8 +213,32 @@ const AssetDetail = () => {
     ? `${detail.nameKr} (${detail.symbol}) 실시간 시세 · 랩메린이`
     : '랩메린이 — 해외선물 경제지표 대시보드';
   const pageDesc = detail
-    ? `${detail.nameKr}(${detail.symbol}) 실시간 선물 시세와 기술적 분석을 제공합니다. 강세/약세 시그널, 지지·저항선, 경제 이벤트를 한눈에 확인하세요. ${detail.description.slice(0, 50)}`
+    ? `${detail.nameKr}(${detail.symbol}) 해외선물 실시간 시세, 차트, 기술적 분석을 무료로. 거래시간${detail.tradingHours ? ` ${detail.tradingHours}` : ''}, 1틱 가치${detail.tickInfo ? ` ${detail.tickInfo}` : ''}, 강세/약세 시그널, 주요 지지·저항선, 관련 경제지표 일정을 한 페이지에서 확인하세요. ${detail.description.slice(0, 60)}`
     : '해외선물 실시간 시세 대시보드';
+  const pageKeywords = detail
+    ? `${detail.nameKr}, ${detail.nameKr} 선물, ${detail.symbol} 선물, ${detail.symbol} 시세, ${detail.nameKr} 실시간, ${detail.nameKr} 차트, ${detail.nameKr} 거래시간, ${detail.nameKr} 1틱, ${detail.nameKr} 증거금, 해외선물 ${detail.nameKr}, ${detail.symbol} 강세 약세, ${detail.symbol} 시그널`
+    : '해외선물';
+  const faqEntries = detail
+    ? [
+        {
+          q: `${detail.nameKr}(${detail.symbol}) 선물이란 무엇인가요?`,
+          a: detail.description,
+        },
+        detail.tradingHours && {
+          q: `${detail.nameKr}(${detail.symbol}) 선물 거래시간은 언제인가요?`,
+          a: `한국 시간 기준 ${detail.tradingHours}에 거래됩니다.${detail.exchange ? ` 거래소는 ${detail.exchange}입니다.` : ''}`,
+        },
+        detail.tickInfo && {
+          q: `${detail.nameKr}(${detail.symbol}) 선물의 1틱 가치는 얼마인가요?`,
+          a: `${detail.tickInfo}${detail.contractSize ? `. 계약 단위는 ${detail.contractSize}입니다.` : ''}`,
+        },
+        detail.contractSize && {
+          q: `${detail.nameKr}(${detail.symbol}) 선물의 계약 단위는 어떻게 되나요?`,
+          a: `${detail.contractSize}${detail.exchange ? `. ${detail.exchange}에서 거래됩니다.` : ''}`,
+        },
+      ].filter(Boolean) as { q: string; a: string }[]
+    : [];
+
   const jsonLd = detail
     ? JSON.stringify([
         {
@@ -234,6 +258,17 @@ const AssetDetail = () => {
           "provider": { "@type": "Organization", "name": "랩메린이", "url": "https://lab.merini.com" },
           "category": "Futures",
         },
+        ...(faqEntries.length > 0
+          ? [{
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": faqEntries.map((f) => ({
+                "@type": "Question",
+                "name": f.q,
+                "acceptedAnswer": { "@type": "Answer", "text": f.a },
+              })),
+            }]
+          : []),
       ])
     : null;
 
@@ -259,6 +294,7 @@ const AssetDetail = () => {
     <Helmet>
       <title>{pageTitle}</title>
       <meta name="description" content={pageDesc} />
+      <meta name="keywords" content={pageKeywords} />
       <link rel="canonical" href={pageUrl!} />
       <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={pageDesc} />
