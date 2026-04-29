@@ -38,8 +38,6 @@ const TERMS = [
   { term: 'EIA 원유재고', en: 'EIA Crude Oil Inventories', def: '미국 에너지정보청(EIA)이 매주 수요일 발표하는 원유 재고량. 예상보다 많으면 원유 가격 하락, 적으면 상승 압력이 생깁니다.' },
 ];
 
-const ALPHABET = [...new Set(TERMS.map(t => t.term[0]))].sort();
-
 const jsonLd = JSON.stringify([
   {
     '@context': 'https://schema.org',

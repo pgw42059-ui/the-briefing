@@ -130,7 +130,7 @@ export default function GuideTax() {
                     {EXAMPLES.map((e) => (
                       <tr key={e.label} className="border-b border-border/30">
                         <td className="px-4 py-2.5 font-semibold">{e.label}</td>
-                        <td className={`px-4 py-2.5 font-mono font-bold ${e.tax === 0 ? 'text-up' : 'text-down'}`}>
+                        <td className={`px-4 py-2.5 font-mono font-bold ${e.tax === 0 ? 'text-primary' : 'text-foreground'}`}>
                           {e.tax === 0 ? '0원 (비과세)' : `${e.tax}만 원`}
                         </td>
                         <td className="px-4 py-2.5 text-xs text-muted-foreground hidden sm:table-cell">{e.desc}</td>
