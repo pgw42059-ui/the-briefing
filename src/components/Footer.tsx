@@ -1,5 +1,7 @@
 
 
+import { Link } from 'react-router-dom';
+
 export const Footer = () => (
   <footer className="border-t border-border/60 bg-muted/30 mt-10" role="contentinfo">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-32 space-y-4">
@@ -23,6 +25,15 @@ export const Footer = () => (
           <span className="text-[10px] text-muted-foreground">↗</span>
         </a>
       </div>
+
+      {/* 가이드 링크 */}
+      <nav aria-label="가이드 링크" className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
+        <Link to="/guide/symbols" className="text-muted-foreground hover:text-primary transition-colors">해외선물 종목 가이드</Link>
+        <Link to="/guide/futures-trading-hours" className="text-muted-foreground hover:text-primary transition-colors">거래시간 (KST)</Link>
+        <Link to="/guide/tick-value" className="text-muted-foreground hover:text-primary transition-colors">1틱 가치 총정리</Link>
+        <Link to="/calculator" className="text-muted-foreground hover:text-primary transition-colors">손익계산기</Link>
+        <Link to="/calendar" className="text-muted-foreground hover:text-primary transition-colors">경제 캘린더</Link>
+      </nav>
 
       <div className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed space-y-2">
         <p>

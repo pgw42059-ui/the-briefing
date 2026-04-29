@@ -21,6 +21,9 @@ const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
+const GuideTradingHours = lazy(() => import("./pages/GuideTradingHours"));
+const GuideTickValue = lazy(() => import("./pages/GuideTickValue"));
+const GuideSymbols = lazy(() => import("./pages/GuideSymbols"));
 
 const queryClient = new QueryClient();
 
@@ -72,6 +75,9 @@ const App = () => (
                 <Route path="/calendar" element={<ErrorBoundary fallbackTitle="캘린더 오류"><CalendarPage /></ErrorBoundary>} />
                 <Route path="/asset/:symbol" element={<ErrorBoundary fallbackTitle="종목 상세 오류"><AssetDetail /></ErrorBoundary>} />
                 <Route path="/admin" element={<ErrorBoundary fallbackTitle="관리자 페이지 오류"><AdminPage /></ErrorBoundary>} />
+                <Route path="/guide/futures-trading-hours" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideTradingHours /></ErrorBoundary>} />
+                <Route path="/guide/tick-value" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideTickValue /></ErrorBoundary>} />
+                <Route path="/guide/symbols" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideSymbols /></ErrorBoundary>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
