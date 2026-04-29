@@ -24,6 +24,10 @@ const AdminPage = lazy(() => import("./pages/AdminPage"));
 const GuideTradingHours = lazy(() => import("./pages/GuideTradingHours"));
 const GuideTickValue = lazy(() => import("./pages/GuideTickValue"));
 const GuideSymbols = lazy(() => import("./pages/GuideSymbols"));
+const GuideMargin = lazy(() => import("./pages/GuideMargin"));
+const GuideTax = lazy(() => import("./pages/GuideTax"));
+const GuideHowToStart = lazy(() => import("./pages/GuideHowToStart"));
+const Glossary = lazy(() => import("./pages/Glossary"));
 
 const queryClient = new QueryClient();
 
@@ -78,6 +82,10 @@ const App = () => (
                 <Route path="/guide/futures-trading-hours" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideTradingHours /></ErrorBoundary>} />
                 <Route path="/guide/tick-value" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideTickValue /></ErrorBoundary>} />
                 <Route path="/guide/symbols" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideSymbols /></ErrorBoundary>} />
+                <Route path="/guide/futures-margin" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideMargin /></ErrorBoundary>} />
+                <Route path="/guide/futures-tax" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideTax /></ErrorBoundary>} />
+                <Route path="/guide/how-to-start" element={<ErrorBoundary fallbackTitle="가이드 페이지 오류"><GuideHowToStart /></ErrorBoundary>} />
+                <Route path="/glossary" element={<ErrorBoundary fallbackTitle="용어 사전 오류"><Glossary /></ErrorBoundary>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
